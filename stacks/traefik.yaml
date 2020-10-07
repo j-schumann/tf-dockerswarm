@@ -20,9 +20,8 @@ services:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --providers.docker.swarmmode
-      - --entryPoints=Name:http Address::80 Compress:true Redirect.EntryPoint:https
-      - --entryPoints=Name:https Address::443 Compress:true TLS
-      - --defaultEntryPoints=https,http
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
       # @todo email via variable
       - --certificatesresolvers.le.acme.email=schumann@vrok.de
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
