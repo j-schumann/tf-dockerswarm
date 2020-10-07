@@ -3,6 +3,8 @@
 # required variables:
 # $GLUSTER_VOLUME = container-data - implies the mount point of the gluster volume (/mnt/$GLUSTER_VOLUME)
 
+cp ../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/80-docker.conf
+
 export LOCALIP=`ip -o -4 addr show dev ens10 | cut -d' ' -f7 | cut -d'/' -f1`
 docker swarm init --advertise-addr $LOCALIP
 

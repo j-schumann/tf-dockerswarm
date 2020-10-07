@@ -7,4 +7,4 @@
 # mount the cloud volume now and automatically after reboot
 mkdir -p $STORAGE_MOUNT
 echo "/dev/disk/by-id/scsi-0HC_Volume_$CLOUD_VOLUME_ID $STORAGE_MOUNT xfs discard,nofail,defaults 0 0" >> /etc/fstab
-mount -o discard,defaults /dev/disk/by-id/scsi-0HC_Volume_${volume_id} $STORAGE_MOUNT
+mount -o discard,defaults /dev/disk/by-id/scsi-0HC_Volume_$CLOUD_VOLUME_ID $STORAGE_MOUNT
