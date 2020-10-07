@@ -14,3 +14,5 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 
 # shared, encrypted mesh network for all containers on all nodes
 docker network create --opt encrypted --driver overlay traefik-net
+
+docker stack deploy traefik -c $parent_path/../stacks/traefik.yaml

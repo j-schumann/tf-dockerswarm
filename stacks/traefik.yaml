@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+
+  traefik:
+    image: traefik:v2.3
+    ports:
+      - 80:80
+      - 443:443
+    deploy:
+      placement:
+        constraints: [node.role==manager]
+    volumes:
+      # Add Docker as a mounted volume, so that Traefik can read the labels of other services
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount the volume to store the certificates
+      # @todo mount point as variable
+      - /mnt/container-data/traefik:/certificates
+    command:
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.swarmmode
+      - --entryPoints=Name:http Address::80 Compress:true Redirect.EntryPoint:https
+      - --entryPoints=Name:https Address::443 Compress:true TLS
+      - --defaultEntryPoints=https,http
+      # @todo email via variable
+      - --certificatesresolvers.le.acme.email=schumann@vrok.de
+      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+      - --log
+    networks:
+      - traefik-net
+
+networks:
+  traefik-net:
+    external: true

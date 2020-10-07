@@ -29,7 +29,7 @@ resource "hcloud_server" "master" {
   user_data   = templatefile("${path.module}/user-data/master.tpl", {
     gluster_volume = var.volume_name
     ip_range       = var.ip_range,
-    ssh_public_key = file("${path.module}/ssh/key.pub"),
+    ssh_public_key = hcloud_ssh_key.root.public_key,
     volume_id      = hcloud_volume.storage.id
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ]
@@ -64,7 +64,7 @@ resource "hcloud_server" "node" {
     gluster_volume = var.volume_name
     ip_range       = var.ip_range,
     master_ip      = hcloud_server_network.master_network.ip
-    ssh_public_key = file("${path.module}/ssh/key.pub"),
+    ssh_public_key = hcloud_ssh_key.root.public_key,
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ] 
 }
