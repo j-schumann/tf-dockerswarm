@@ -1,10 +1,12 @@
 #!/bin/bash
 
+parent_path=`dirname "$0"`
+
 echo "Setting up security..."
-./init-security-node.sh
+$parent_path/init-security-node.sh
 
 echo "Mounting the GlusterFS volume..."
-./init-gluster-node.sh
+$parent_path/init-gluster-node.sh
 
 echo "Joininging the Docker Swearm..."
-./init-swarm-node.sh
+$parent_path/init-swarm-node.sh

@@ -1,13 +1,15 @@
 #!/bin/bash
 
+parent_path=`dirname "$0"`
+
 echo "Setting up security..."
-./init-security-master.sh
+$parent_path/init-security-master.sh
 
 echo "Mounting the attached cloud volume..."
-./init-storage-mount.sh
+$parent_path/init-storage-mount.sh
 
 echo "Configuring the GlusterFS Server..."
-./init-gluster-master.sh
+$parent_path/init-gluster-master.sh
 
 echo "Creating the Docker Swearm..."
-./init-swarm-master.sh
+$parent_path/init-swarm-master.sh
