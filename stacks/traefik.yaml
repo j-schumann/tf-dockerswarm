@@ -29,6 +29,28 @@ services:
       - --log
     networks:
       - traefik-net
+      
+  website:
+    image: nginx
+    deploy:
+      placement:
+        constraints: [node.role==worker]
+      labels:
+        - traefik.port=80
+        - traefik.enable=true
+        - traefik.docker.network=traefik-net
+        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        - traefik.http.routers.traefik-net-http.rule=Host(`test.vrok.de`)
+        - traefik.http.routers.traefik-net-http.entrypoints=http
+        - traefik.http.routers.traefik-net-http.middlewares=https-redirect
+        - traefik.http.routers.traefik-net-https.rule=Host(`test.vrok.de`)
+        - traefik.http.routers.traefik-net-https.entrypoints=https
+        - traefik.http.routers.traefik-net-https.tls=true
+        - traefik.http.routers.traefik-net-https.tls.certresolver=le
+        - traefik.http.services.traefik-net.loadbalancer.server.port=80
+    networks:
+      - traefik-net    
 
 networks:
   traefik-net:
