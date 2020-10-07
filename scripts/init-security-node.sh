@@ -4,8 +4,10 @@
 # $LOCAL_IP_RANGE = 10.0.0.0/24 - which addesses to allow for access from other swarm machines
 
 sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
-cp ../server-files/usr/local/sbin/fail2ban-status.sh /usr/local/sbin/fail2ban-status.sh
-cp ../server-files/etc/ufw/applications.d/* /etc/ufw/applications.d/
+
+parent_path=`dirname "$0"`
+cp $parent_path/../server-files/usr/local/sbin/fail2ban-status.sh /usr/local/sbin/fail2ban-status.sh
+cp $parent_path/../server-files/etc/ufw/applications.d/* /etc/ufw/applications.d/
 
 ufw allow OpenSSH
 
