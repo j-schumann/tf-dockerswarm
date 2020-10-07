@@ -66,7 +66,9 @@ runcmd:
  - export GLUSTER_VOLUME=${gluster_volume}
  - export LOCAL_IP_RANGE=${ip_range}
  - export MASTER_IPV4_ADDRESS=${master_ip}
+ # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
+ - /root/terraform-init/scripts/setup-node.sh
  - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $MASTER_IPV4_ADDRESS" >> /root/envvars
 
 power_state:

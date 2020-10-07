@@ -67,7 +67,9 @@ runcmd:
  - export GLUSTER_VOLUME=${gluster_volume}
  - export LOCAL_IP_RANGE=${ip_range}
  - export STORAGE_MOUNT=/mnt/storage
+ # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
+ - /root/terraform-init/scripts/setup-master.sh
  - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $CLOUD_VOLUME_ID $STORAGE_MOUNT" >> /root/envvars
 
 power_state:
