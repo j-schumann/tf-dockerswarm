@@ -6,4 +6,11 @@
 
 cp ../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/80-docker.conf
 
+echo -n "waiting for join-token from master..."
+while [ ! -f /mnt/$GLUSTER_VOLUME/join-token.txt ]; do
+    sleep 2
+    echo -n "."
+done
+
+echo ""
 docker swarm join --token `cat /mnt/$GLUSTER_VOLUME/join-token.txt` $MASTER_IPV4_ADDRESS:2377
