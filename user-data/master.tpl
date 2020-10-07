@@ -56,16 +56,16 @@ users:
   lock_passwd: true
   shell: /bin/bash
   ssh-authorized-keys:
-    - ${hcloud_ssh_key.root.public_key}
+    - ${ssh_public_key}
   groups:
     - ubuntu
   sudo:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
- - export LOCAL_IP_RANGE=${var.ip_range}
- - export GLUSTER_VOLUME=container-data
- - export CLOUD_VOLUME_ID=${hcloud_volume.storage.id}
+ - export CLOUD_VOLUME_ID=${volume_id}
+ - export GLUSTER_VOLUME=${gluster_volume}
+ - export LOCAL_IP_RANGE=${ip_range}
  - export STORAGE_MOUNT=/mnt/storage
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $CLOUD_VOLUME_ID $STORAGE_MOUNT" >> /root/envvars

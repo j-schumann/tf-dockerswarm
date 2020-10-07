@@ -26,6 +26,10 @@ variable "ip_range" {
     default = "10.0.0.0/24"
 }
 
+variable "volume_name" {
+    default = "container-data"
+}
+
 variable "volume_size" {
     default = "10"
 }

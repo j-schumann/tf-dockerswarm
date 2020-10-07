@@ -56,16 +56,16 @@ users:
   lock_passwd: true
   shell: /bin/bash
   ssh-authorized-keys:
-    - ${hcloud_ssh_key.root.public_key}
+    - ${ssh_public_key}
   groups:
     - ubuntu
   sudo:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
- - export LOCAL_IP_RANGE=${var.ip_range}
- - export GLUSTER_VOLUME=container-data
- - export MASTER_IPV4_ADDRESS=${hcloud_server_network.master_network.ip}
+ - export GLUSTER_VOLUME=${gluster_volume}
+ - export LOCAL_IP_RANGE=${ip_range}
+ - export MASTER_IPV4_ADDRESS=${master_ip}
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $MASTER_IPV4_ADDRESS" >> /root/envvars
 

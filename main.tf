@@ -26,12 +26,17 @@ resource "hcloud_server" "master" {
   image       = var.os_image
   server_type = var.master_type
   location    = var.location
-  user_data   = templatefile("${path.module}/user-data/master.tpl", {})
+  user_data   = templatefile("${path.module}/user-data/master.tpl", {
+    gluster_volume = var.volume_name
+    ip_range       = var.ip_range,
+    ssh_public_key = file("${path.module}/ssh/key.pub"),
+    volume_id      = hcloud_volume.storage.id
+  })
   ssh_keys    = [ hcloud_ssh_key.root.id ]
 }
 
 resource "hcloud_volume" "storage" {
-  name     = "container-data"
+  name     = var.volume_name
   location = var.location
   size     = var.volume_size
   format   = "xfs"
@@ -55,7 +60,12 @@ resource "hcloud_server" "node" {
   image       = var.os_image
   server_type = var.node_type
   location    = var.location
-  user_data   = templatefile("${path.module}/user-data/node.tpl", {})
+  user_data   = templatefile("${path.module}/user-data/node.tpl", {
+    gluster_volume = var.volume_name
+    ip_range       = var.ip_range,
+    master_ip      = hcloud_server_network.master_network.ip
+    ssh_public_key = file("${path.module}/ssh/key.pub"),
+  })
   ssh_keys    = [ hcloud_ssh_key.root.id ] 
 }
 
