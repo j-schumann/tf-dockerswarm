@@ -14,4 +14,4 @@ ufw allow proto esp from $LOCAL_IP_RANGE to any
 
 ufw allow from $LOCAL_IP_RANGE to any app "Docker Node"
 
-ufw enable
+ufw --force enable
