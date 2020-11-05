@@ -37,43 +37,82 @@ services:
     networks:
       - traefik-net
       
-  database-master:
-    image: bitnami/mariadb-galera:latest
-    hostname: database0
+  mariadb-master:
+    image: bitnami/mariadb:latest
+    hostname: mariadb-master
     deploy:
       replicas: 1
       placement:
         constraints: [node.role==worker]
-    environment:
-      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
-      - MARIADB_GALERA_MARIABACKUP_USER
-      - MARIADB_GALERA_MARIABACKUP_PASSWORD
-      - MARIADB_DATABASE
-      - MARIADB_USER
-      - MARIADB_PASSWORD
-      - MARIADB_ROOT_PASSWORD
     volumes:
-      - ${CONTAINER_DATA}/database0/db:/bitnami/mariadb
-      - ${CONTAINER_DATA}/database/config:/opt/bitnami/mariadb/conf/
+      - ${CONTAINER_DATA}/database0/db:/bitnami/mariadb'
+    environment:
+      - MARIADB_REPLICATION_MODE=master
+      - MARIADB_REPLICATION_USER=repl_user
+      - MARIADB_USER=my_user
+      - MARIADB_DATABASE=my_database
+      - MARIADB_ROOT_PASSWORD=my_root_password
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
 
-  database-node:
-    image: bitnami/mariadb-galera:latest
-    hostname: database{{.Task.Slot}}
-    deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role==worker]
-    environment:
-      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://database0
-      - MARIADB_GALERA_MARIABACKUP_USER
-      - MARIADB_GALERA_MARIABACKUP_PASSWORD
-      - MARIADB_DATABASE
-      - MARIADB_USER
-      - MARIADB_PASSWORD
-      - MARIADB_ROOT_PASSWORD
+  mariadb-slave:
+    image: bitnami/mariadb:latest
     volumes:
-      - ${CONTAINER_DATA}/database{{.Task.Slot}}/db:/bitnami/mariadb
-      - ${CONTAINER_DATA}/database{{.Task.Slot}}/config:/opt/bitnami/mariadb/conf/
+      - ${CONTAINER_DATA}/database1/db:/bitnami/mariadb'
+    environment:
+      - MARIADB_REPLICATION_MODE=slave
+      - MARIADB_REPLICATION_USER=repl_user
+      - MARIADB_USER=my_user
+      - MARIADB_DATABASE=my_database
+      - MARIADB_MASTER_HOST=mariadb-master
+      - MARIADB_MASTER_PORT_NUMBER=3306
+      - MARIADB_MASTER_ROOT_PASSWORD=my_root_password
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mariadb/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      
+#  database-master:
+#    image: bitnami/mariadb-galera:latest
+#    hostname: database0
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints: [node.role==worker]
+#    environment:
+#      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
+#      - MARIADB_GALERA_MARIABACKUP_USER
+#      - MARIADB_GALERA_MARIABACKUP_PASSWORD
+#      - MARIADB_DATABASE
+#      - MARIADB_USER
+#      - MARIADB_PASSWORD
+#      - MARIADB_ROOT_PASSWORD
+#    volumes:
+#      - ${CONTAINER_DATA}/database0/db:/bitnami/mariadb
+#      - ${CONTAINER_DATA}/database0/config:/opt/bitnami/mariadb/conf/
+
+#  database-node:
+#    image: bitnami/mariadb-galera:latest
+#    hostname: database{{.Task.Slot}}
+#    deploy:
+#      replicas: 1
+#      placement:
+#        constraints: [node.role==worker]
+#    environment:
+#      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://database0
+#      - MARIADB_GALERA_MARIABACKUP_USER
+#      - MARIADB_GALERA_MARIABACKUP_PASSWORD
+#      - MARIADB_DATABASE
+#      - MARIADB_USER
+#      - MARIADB_PASSWORD
+#      - MARIADB_ROOT_PASSWORD
+#    volumes:
+#      - ${CONTAINER_DATA}/database{{.Task.Slot}}/db:/bitnami/mariadb
+#      - ${CONTAINER_DATA}/database{{.Task.Slot}}/config:/opt/bitnami/mariadb/conf/
 
   website:
     image: nginx

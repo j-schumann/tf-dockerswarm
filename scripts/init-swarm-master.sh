@@ -15,6 +15,10 @@ cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/80-doc
 export LOCALIP=`ip -o -4 addr show dev ens10 | cut -d' ' -f7 | cut -d'/' -f1`
 docker swarm init --advertise-addr $LOCALIP
 
+# install docker-compose from github, ubuntu has an old version
+curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
 # put the token on the shared volume so nodes can join the swarm
 docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 
@@ -22,6 +26,9 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 docker network create --opt encrypted --driver overlay traefik-net
 
 mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,database0/config,database0/db,database1/config,database1/db}
+
+# required for mariadb to start
+chown -R 1001:1001 /mnt/$GLUSTER_VOLUME/{database0/config,database0/db,database1/config,database1/db}
 
 sed -i \
     -e "s#PUBLIC_IP#$PUBLIC_IP#g" \
