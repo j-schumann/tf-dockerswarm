@@ -8,6 +8,12 @@ resource "hcloud_ssh_key" "root" {
 }
 
 # Network Setup
+resource "hcloud_floating_ip" "public_ip" {
+  type          = "ipv4"
+  name          = "public-ip"
+  home_location = var.location
+}
+
 resource "hcloud_network" "network" {
   name     = "network-1"
   ip_range = var.ip_range
@@ -27,10 +33,13 @@ resource "hcloud_server" "master" {
   server_type = var.master_type
   location    = var.location
   user_data   = templatefile("${path.module}/user-data/master.tpl", {
-    gluster_volume = var.volume_name
-    ip_range       = var.ip_range,
-    ssh_public_key = hcloud_ssh_key.root.public_key,
-    volume_id      = hcloud_volume.storage.id
+    acme_mail           = var.acme_mail
+    gluster_volume      = var.volume_name
+    ip_range            = var.ip_range,
+    mysql_root_password = var.mysql_root_password
+    public_ip           = hcloud_floating_ip.public_ip.ip_address
+    ssh_public_key      = hcloud_ssh_key.root.public_key,
+    volume_id           = hcloud_volume.storage.id
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ]
 }
@@ -51,6 +60,11 @@ resource "hcloud_volume_attachment" "storage_attachment" {
 resource "hcloud_server_network" "master_network" {
   server_id  = hcloud_server.master.id
   subnet_id  = hcloud_network_subnet.subnet.id
+}
+
+resource "hcloud_floating_ip_assignment" "master_floating_ip" {
+  floating_ip_id = hcloud_floating_ip.public_ip.id
+  server_id      = hcloud_server.master.id
 }
 
 # Worker Setup
@@ -85,4 +99,9 @@ output "node_ips" {
     for server in hcloud_server.node :
     server.name => server.ipv4_address
   }
+}
+
+output "public_ipv4" {
+  description = "Public IP address"
+  value = hcloud_floating_ip.public_ip.ip_address
 }

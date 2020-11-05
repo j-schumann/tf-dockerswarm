@@ -17,22 +17,12 @@ packages:
   - fail2ban
   - git
   - glusterfs-server
-  - libarray-unique-perl
-  - libdbd-mysql-perl
-  - libfile-slurp-perl
-  - liblist-moreutils-perl
-  - libmodule-install-perl
-  - libmonitoring-plugin-perl
-  - libnumber-format-perl
-  - libreadonly-xs-perl
   - logrotate
   - m4
   - make
   - mc
-  - monitoring-plugins
   - msmtp
   - msmtp-mta
-  - nagios-plugins-contrib
   - rsync
   - rsyslog
   - sudo
@@ -63,19 +53,19 @@ users:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
+ - export ACME_MAIL=${acme_mail}
  - export CLOUD_VOLUME_ID=${volume_id}
  - export GLUSTER_VOLUME=${gluster_volume}
  - export LOCAL_IP_RANGE=${ip_range}
+ - export MYSQL_ROOT_PASSWORD=${mysql_root_password}
+ - export PUBLIC_IP=${public_ip}
  - export STORAGE_MOUNT=/mnt/storage
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - /root/terraform-init/scripts/setup-master.sh
- - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $CLOUD_VOLUME_ID $STORAGE_MOUNT" >> /root/envvars
 
 power_state:
   delay: "now"
   mode: reboot
-  message: First reboot after cloud-init
+  message: First reboot by cloud-init
   condition: True
-
-final_message: "cloud-init finished after $UPTIME seconds"

@@ -4,9 +4,16 @@ services:
 
   traefik:
     image: traefik:v2.3
+    # mode=host required to get the correct client IP without further rules
+    # also ports published by docker don't need to be opened in UFW because
+    # docker adds the iptable rules automatically
     ports:
-      - 80:80
-      - 443:443
+      - target: 80
+        published: 80
+        mode: host
+      - target: 443
+        published: 443
+        mode: host
     deploy:
       placement:
         constraints: [node.role==manager]
@@ -14,23 +21,60 @@ services:
       # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount the volume to store the certificates
-      # @todo mount point as variable
-      - /mnt/container-data/traefik:/certificates
+      - ${CONTAINER_DATA}/traefik:/certificates
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --providers.docker.swarmmode
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
-      # @todo email via variable
-      - --certificatesresolvers.le.acme.email=schumann@vrok.de
+      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_MAIL}
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
       - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      # @todo disable?
       - --log
     networks:
       - traefik-net
       
+  database-master:
+    image: bitnami/mariadb-galera:latest
+    hostname: database0
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role==worker]
+    environment:
+      - MARIADB_GALERA_CLUSTER_BOOTSTRAP=yes
+      - MARIADB_GALERA_MARIABACKUP_USER
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_USER
+      - MARIADB_PASSWORD
+      - MARIADB_ROOT_PASSWORD
+    volumes:
+      - ${CONTAINER_DATA}/database0/db:/bitnami/mariadb
+      - ${CONTAINER_DATA}/database/config:/opt/bitnami/mariadb/conf/
+
+  database-node:
+    image: bitnami/mariadb-galera:latest
+    hostname: database{{.Task.Slot}}
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role==worker]
+    environment:
+      - MARIADB_GALERA_CLUSTER_ADDRESS=gcomm://database0
+      - MARIADB_GALERA_MARIABACKUP_USER
+      - MARIADB_GALERA_MARIABACKUP_PASSWORD
+      - MARIADB_DATABASE
+      - MARIADB_USER
+      - MARIADB_PASSWORD
+      - MARIADB_ROOT_PASSWORD
+    volumes:
+      - ${CONTAINER_DATA}/database{{.Task.Slot}}/db:/bitnami/mariadb
+      - ${CONTAINER_DATA}/database{{.Task.Slot}}/config:/opt/bitnami/mariadb/conf/
+
   website:
     image: nginx
     deploy:

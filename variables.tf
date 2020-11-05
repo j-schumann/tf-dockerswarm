@@ -2,6 +2,10 @@
 # or using the -var="hcloud_token=..." CLI option
 variable "hcloud_token" {}
 
+variable "acme_mail" {}
+
+variable "mysql_root_password" {}
+
 variable "os_image" {
     default = "ubuntu-20.04"
 }
