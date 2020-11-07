@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
 
-  traefik:
+  proxy:
     image: traefik:v2.3
     # mode=host required to get the correct client IP without further rules
     # also ports published by docker don't need to be opened in UFW because
@@ -48,7 +48,8 @@ services:
         constraints: [node.role==manager]
     volumes:
       # @todo is the attached storage fast enough? Or should the local SSD be used?
-      - ${CONTAINER_DATA}/database0/db:/bitnami/mariadb
+      - ${CONTAINER_DATA}/mariadb/db:/bitnami/mariadb
+      - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=master
       - MARIADB_REPLICATION_USER=repl_user
@@ -76,6 +77,7 @@ services:
       # network filesystem. This will cause the slave to read the
       # whole binlog again when the swarm switches it to another node.
       - /opt/container-data/dbslave:/bitnami/mariadb
+      - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=slave
       - MARIADB_REPLICATION_USER=repl_user
@@ -111,6 +113,30 @@ services:
         - traefik.http.services.traefik-net.loadbalancer.server.port=80
     volumes:
       - /var/www/html/index.html:/usr/share/nginx/html/index.html
+    networks:
+      - traefik-net
+
+  adminer:
+    image: adminer:4.7
+    labels:
+        - traefik.port=8080
+        - traefik.enable=true
+        - traefik.docker.network=traefik-net
+        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        # apt-get install apache2-utils
+        # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
+        - "traefik.http.middlewares.test-auth.basicauth.users=admin:$$apr1$$wLhoY3As$$GTIp6eL01pYtk5fkcQ4Qx0"
+        - traefik.http.routers.traefik-net-http.rule=Host(`adminer.test.vrok.de`)
+        - traefik.http.routers.traefik-net-http.entrypoints=http
+        - traefik.http.routers.traefik-net-http.middlewares=https-redirect
+        - traefik.http.routers.traefik-net-https.rule=Host(`adminer.test.vrok.de`)
+        - traefik.http.routers.traefik-net-https.entrypoints=https
+        - traefik.http.routers.traefik-net-https.tls=true
+        - traefik.http.routers.traefik-net-https.tls.certresolver=le
+        - traefik.http.services.traefik-net.loadbalancer.server.port=80
+    environment:
+      - ADMINER_DEFAULT_SERVER=dbmaster
     networks:
       - traefik-net
 

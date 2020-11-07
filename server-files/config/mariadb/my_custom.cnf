@@ -1,0 +1,11 @@
+[mysqld]
+long_query_time = 2
+slow_query_log = on
+query_cache_size = 96M
+
+max_allowed_packet = 64M
+
+max_heap_table_size = 64M
+tmp_table_size = 64M
+
+table_open_cache = 1000
