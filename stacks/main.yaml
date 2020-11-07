@@ -17,6 +17,8 @@ services:
     deploy:
       placement:
         constraints: [node.role==manager]
+    environment:
+      - TZ
     volumes:
       # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -34,6 +36,7 @@ services:
       - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
       # @todo disable?
       - --log
+      - --accesslog=true
     networks:
       - traefik-net
 
@@ -48,7 +51,12 @@ services:
         constraints: [node.role==manager]
     volumes:
       # @todo is the attached storage fast enough? Or should the local SSD be used?
-      - ${CONTAINER_DATA}/mariadb/db:/bitnami/mariadb
+      # result writing 100000 rows:
+      # on lokal disk on master: 1.9-2.1s
+      # on storage mount on master: ~2.0s
+      # on gluster mount on master: 2.2-2.5s
+      # on gluster mount on node: 2.2-2.8s
+      - ${STORAGE_MOUNT}/mariadb:/bitnami/mariadb
       - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=master
@@ -58,6 +66,8 @@ services:
       - MARIADB_PASSWORD
       - MARIADB_DATABASE
       - MARIADB_ROOT_PASSWORD
+    networks:
+      - traefik-net
     healthcheck:
       test: ['CMD', '/opt/bitnami/scripts/mariadb/healthcheck.sh']
       interval: 15s
@@ -85,32 +95,34 @@ services:
       - MARIADB_MASTER_HOST=dbmaster
       # used to access the master, also set as local root pw
       - MARIADB_MASTER_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+    networks:
+      - traefik-net
     healthcheck:
       test: ['CMD', '/opt/bitnami/scripts/mariadb/healthcheck.sh']
       interval: 15s
       timeout: 5s
       retries: 6
 
-  website:
+  webserver:
     image: nginx
     deploy:
       replicas: 2
       placement:
         constraints: [node.role==worker]
       labels:
-        - traefik.port=80
         - traefik.enable=true
         - traefik.docker.network=traefik-net
-        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
-        - traefik.http.routers.traefik-net-http.rule=Host(`test.vrok.de`)
-        - traefik.http.routers.traefik-net-http.entrypoints=http
-        - traefik.http.routers.traefik-net-http.middlewares=https-redirect
-        - traefik.http.routers.traefik-net-https.rule=Host(`test.vrok.de`)
-        - traefik.http.routers.traefik-net-https.entrypoints=https
-        - traefik.http.routers.traefik-net-https.tls=true
-        - traefik.http.routers.traefik-net-https.tls.certresolver=le
-        - traefik.http.services.traefik-net.loadbalancer.server.port=80
+        - traefik.http.routers.website-http.rule=Host(`test.vrok.de`)
+        - traefik.http.routers.website-http.entrypoints=http
+        - traefik.http.routers.website-http.middlewares=website-redirect
+        - traefik.http.middlewares.website-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.website-redirect.redirectscheme.permanent=true
+        - traefik.http.routers.website-https.rule=Host(`test.vrok.de`)
+        - traefik.http.routers.website-https.entrypoints=https
+        - traefik.http.routers.website-https.tls=true
+        - traefik.http.routers.website-https.tls.certresolver=le
+        - traefik.http.routers.website-https.service=website-service
+        - traefik.http.services.website-service.loadbalancer.server.port=80
     volumes:
       - /var/www/html/index.html:/usr/share/nginx/html/index.html
     networks:
@@ -118,23 +130,28 @@ services:
 
   adminer:
     image: adminer:4.7
-    labels:
-        - traefik.port=8080
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role==worker]
+      labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
-        - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
-        - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
+        - traefik.http.routers.adminer-http.rule=Host(`adminer.test.vrok.de`)
+        - traefik.http.routers.adminer-http.entrypoints=http
+        - traefik.http.routers.adminer-http.middlewares=adminer-redirect
+        - traefik.http.middlewares.adminer-redirect.redirectscheme.scheme=https
+        - traefik.http.middlewares.adminer-redirect.redirectscheme.permanent=true
+        - traefik.http.routers.adminer-https.rule=Host(`adminer.test.vrok.de`)
+        - traefik.http.routers.adminer-https.entrypoints=https
+        - traefik.http.routers.adminer-https.tls=true
+        - traefik.http.routers.adminer-https.tls.certresolver=le
+        - traefik.http.routers.adminer-https.service=adminer-service
+        - traefik.http.services.adminer-service.loadbalancer.server.port=8080
+        - traefik.http.routers.adminer-https.middlewares=adminer-auth
         # apt-get install apache2-utils
         # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
-        - "traefik.http.middlewares.test-auth.basicauth.users=admin:$$apr1$$wLhoY3As$$GTIp6eL01pYtk5fkcQ4Qx0"
-        - traefik.http.routers.traefik-net-http.rule=Host(`adminer.test.vrok.de`)
-        - traefik.http.routers.traefik-net-http.entrypoints=http
-        - traefik.http.routers.traefik-net-http.middlewares=https-redirect
-        - traefik.http.routers.traefik-net-https.rule=Host(`adminer.test.vrok.de`)
-        - traefik.http.routers.traefik-net-https.entrypoints=https
-        - traefik.http.routers.traefik-net-https.tls=true
-        - traefik.http.routers.traefik-net-https.tls.certresolver=le
-        - traefik.http.services.traefik-net.loadbalancer.server.port=80
+        - "traefik.http.middlewares.adminer-auth.basicauth.users=admin:$$apr1$$wLhoY3As$$GTIp6eL01pYtk5fkcQ4Qx0"
     environment:
       - ADMINER_DEFAULT_SERVER=dbmaster
     networks:

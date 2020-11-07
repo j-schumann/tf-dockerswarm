@@ -5,15 +5,16 @@
 # $GLUSTER_VOLUME = container-data - implies the mount point of the gluster volume (/mnt/$GLUSTER_VOLUME)
 # $MYSQL_ROOT_PASSWORD = intial root password for mariadb/galera cluster 
 # $PUBLIC_IP = IP address of the swarm master
+# $STORAGE_MOUNT = /mnt/storage - directory to use for the volume brick, probably mount point of an attached cloud volume
 
 parent_path=`dirname "$0"`
 env_file="$parent_path/../stacks/.env"
 
 # default directories for the container data
-mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,mariadb/db}
+mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config} $STORAGE_MOUNT/mariadb
 
 # required for mariadb to start
-chown -R 1001:1001 /mnt/$GLUSTER_VOLUME/mariadb/db
+chown -R 1001:1001 $STORAGE_MOUNT/mariadb
 
 cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
@@ -37,6 +38,7 @@ sed -i \
     -e "s#ACME_MAIL#$ACME_MAIL#g" \
     -e "s#GLUSTER_VOLUME#$GLUSTER_VOLUME#g" \
     -e "s#MYSQL_ROOT_PASSWORD#$MYSQL_ROOT_PASSWORD#g" \
+    -e "s#STORAGE_MOUNT#$STORAGE_MOUNT#g" \
     "$env_file"
 
 # stack deploy does not support env-files, so prepare the config using docker-compose first...
