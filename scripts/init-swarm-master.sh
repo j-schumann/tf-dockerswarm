@@ -25,10 +25,11 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 # shared, encrypted mesh network for all containers on all nodes
 docker network create --opt encrypted --driver overlay traefik-net
 
-mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,database0/config,database0/db,database1/config,database1/db}
+# default directories for the container data
+mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,mariadb/db}
 
 # required for mariadb to start
-chown -R 1001:1001 /mnt/$GLUSTER_VOLUME/{database0/config,database0/db,database1/config,database1/db}
+chown -R 1001:1001 /mnt/$GLUSTER_VOLUME/mariadb/db
 
 sed -i \
     -e "s#PUBLIC_IP#$PUBLIC_IP#g" \
@@ -38,4 +39,4 @@ sed -i \
     "$env_file"
 
 # stack deploy does not support env-files, so prepare the config using docker-compose first...
-docker stack deploy traefik -c <(docker-compose -f $parent_path/../stacks/traefik.yaml --env-file $env_file config)
+docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)

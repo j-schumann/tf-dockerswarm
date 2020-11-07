@@ -13,6 +13,9 @@ while [ ! -f /mnt/$GLUSTER_VOLUME/join-token.txt ]; do
     echo -n "."
 done
 
+# create local directories for container-data
+mkdir -p /opt/container-data/dbslave
+
 echo ""
 docker swarm join --token `cat /mnt/$GLUSTER_VOLUME/join-token.txt` $MASTER_IPV4_ADDRESS:2377
 
