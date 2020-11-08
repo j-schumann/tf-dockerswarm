@@ -33,6 +33,7 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 # shared, encrypted mesh network for all containers on all nodes
 docker network create --opt encrypted --driver overlay traefik-net
 
+# prepare the .env file, the ENV variables are only set now in the cloud-init boot
 sed -i \
     -e "s#PUBLIC_IP#$PUBLIC_IP#g" \
     -e "s#ACME_MAIL#$ACME_MAIL#g" \
@@ -41,5 +42,19 @@ sed -i \
     -e "s#STORAGE_MOUNT#$STORAGE_MOUNT#g" \
     "$env_file"
 
+# we don't want to deploy the stack right now but only after the reboot
+# triggered by cloud-init and an additional 5min wait time to give the nodes
+# time to be ready
+mkdir -p /etc/local/runonce.d/ran
+cp $parent_path/../server-files/usr/local/sbin/runonce.sh /usr/local/sbin/
+chmod ug+x /usr/local/sbin/runonce.sh
+echo "@reboot root /usr/local/sbin/runonce.sh" >> /etc/cron.d/runonce
+
 # stack deploy does not support env-files, so prepare the config using docker-compose first...
-docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)
+deployCommand="docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)"
+
+echo "sleep 300; $deployCommand" >> /etc/local/runonce.d/deploy-main-stack.sh
+chown root /etc/local/runonce.d/deploy-main-stack.sh 
+chmod ug+x /etc/local/runonce.d/deploy-main-stack.sh
+
+#docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)

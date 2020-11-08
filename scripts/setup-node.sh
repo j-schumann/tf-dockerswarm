@@ -8,5 +8,5 @@ $parent_path/init-security-node.sh
 echo "Mounting the GlusterFS volume..."
 $parent_path/init-gluster-node.sh
 
-echo "Joininging the Docker Swearm..."
+echo "Joining the Docker Swarm..."
 $parent_path/init-swarm-node.sh
