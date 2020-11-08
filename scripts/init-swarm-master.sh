@@ -50,11 +50,7 @@ cp $parent_path/../server-files/usr/local/sbin/runonce.sh /usr/local/sbin/
 chmod ug+x /usr/local/sbin/runonce.sh
 echo "@reboot root /usr/local/sbin/runonce.sh" >> /etc/cron.d/runonce
 
-# stack deploy does not support env-files, so prepare the config using docker-compose first...
-deployCommand="docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)"
-
-echo "sleep 300; $deployCommand" >> /etc/local/runonce.d/deploy-main-stack.sh
-chown root /etc/local/runonce.d/deploy-main-stack.sh 
+echo "sleep 300; root/terraform-init/stacks/deploy-main.sh" >> /etc/local/runonce.d/deploy-main-stack.sh
 chmod ug+x /etc/local/runonce.d/deploy-main-stack.sh
 
 #docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)
