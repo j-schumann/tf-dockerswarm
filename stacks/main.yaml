@@ -56,7 +56,7 @@ services:
       # on storage mount on master: ~2.0s
       # on gluster mount on master: 2.2-2.5s
       # on gluster mount on node: 2.2-2.8s
-      - ${STORAGE_MOUNT}/mariadb:/bitnami/mariadb
+      - ${STORAGE_DIR}/mariadb:/bitnami/mariadb
       - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=master
