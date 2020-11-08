@@ -12,7 +12,7 @@ echo "$MASTER_IPV4_ADDRESS swarmmaster" >> /etc/hosts
 
 # mount the shared volume now and also automatically after reboot
 # @todo customize master hostname?
-echo "swarmmaster:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev 0 0" >> /etc/fstab
+echo "swarmmaster:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=45 0 0" >> /etc/fstab
 
 echo -n "waiting till mount of the shared volume succeeds..."
 until mount.glusterfs swarmmaster:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME 2> /dev/null

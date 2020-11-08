@@ -16,6 +16,9 @@ done
 # create local directories for container-data
 mkdir -p /opt/container-data/dbslave
 
+# required for mariadb to start
+chown -R 1001:1001 /opt/container-data/dbslave
+
 echo ""
 docker swarm join --token `cat /mnt/$GLUSTER_VOLUME/join-token.txt` $MASTER_IPV4_ADDRESS:2377
 

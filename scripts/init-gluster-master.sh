@@ -19,4 +19,4 @@ gluster volume start $GLUSTER_VOLUME
 # mount now and also automatically after reboot
 # @todo customize hostname?
 mount.glusterfs swarmmaster:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME
-echo "localhost:container-data /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev,backupvolfile-server=localhost 0 0" >> /etc/fstab
+echo "localhost:container-data /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=15,backupvolfile-server=localhost 0 0" >> /etc/fstab
