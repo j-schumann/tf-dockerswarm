@@ -22,7 +22,7 @@ cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUM
 
 # enp7s0 is specific to CPX servers, ens10 for CX servers
 localInterface="ens10"
-if [ $NODE_TYPE ?? 'CPX' ]; then
+if [[ $NODE_TYPE =~ "cpx" ]]; then
   localInterface="enp7s0"
 fi
 
