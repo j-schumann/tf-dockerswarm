@@ -21,8 +21,8 @@ packages:
   - m4
   - make
   - mc
-  - msmtp
-  - msmtp-mta
+#  - msmtp
+#  - msmtp-mta
   - rsync
   - rsyslog
   - sudo

@@ -57,11 +57,11 @@ sed -i \
 mkdir -p /etc/local/runonce.d/ran
 cp $parent_path/../server-files/usr/local/sbin/runonce.sh /usr/local/sbin/
 chmod ug+x /usr/local/sbin/runonce.sh
-echo "@reboot root /usr/local/sbin/runonce.sh" >> /etc/cron.d/runonce
+echo "@reboot root /usr/local/sbin/runonce.sh 2>&1 >> /var/log/runonce.log" >> /etc/cron.d/runonce
 
 echo "#!/bin/bash
 sleep 300
-/root/terraform-init/stacks/deploy-main.sh" >> /etc/local/runonce.d/deploy-main-stack.sh
+/root/terraform-init/stacks/deploy-main.sh 2>&1 >> /var/log/deploy.log" >> /etc/local/runonce.d/deploy-main-stack.sh
 chmod ug+x /etc/local/runonce.d/deploy-main-stack.sh
 
 #docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)

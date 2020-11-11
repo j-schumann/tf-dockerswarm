@@ -55,7 +55,7 @@ services:
       # on storage mount on master: ~2.0s, 1.7s
       # on gluster mount on master: 2.2-2.5s, 1.7-2.7s
       # on gluster mount on node: 2.2-2.8s, 3.4-4.6s
-      # on dedicated root with raid0 SATA: [not tested], 1.4s
+      # on dedicated root with raid0 SATA: [not tested], 1.37s (myisam) / 1.4-1.8s (innodb)
       - ${STORAGE_DIR}/mariadb:/bitnami/mariadb # decided for storage mount so the master can easily be recreated without importing data
       - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
