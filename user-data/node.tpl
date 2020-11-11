@@ -17,22 +17,12 @@ packages:
   - fail2ban
   - git
   - glusterfs-client
-  - libarray-unique-perl
-  - libdbd-mysql-perl
-  - libfile-slurp-perl
-  - liblist-moreutils-perl
-  - libmodule-install-perl
-  - libmonitoring-plugin-perl
-  - libnumber-format-perl
-  - libreadonly-xs-perl
   - logrotate
   - m4
   - make
   - mc
-  - monitoring-plugins
   - msmtp
   - msmtp-mta
-  - nagios-plugins-contrib
   - rsync
   - rsyslog
   - sudo
@@ -66,6 +56,7 @@ runcmd:
  - export GLUSTER_VOLUME=${gluster_volume}
  - export LOCAL_IP_RANGE=${ip_range}
  - export MASTER_IPV4_ADDRESS=${master_ip}
+ - export NODE_TYPE=${node_type}
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - /root/terraform-init/scripts/setup-node.sh

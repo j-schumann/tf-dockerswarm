@@ -50,13 +50,13 @@ services:
       placement:
         constraints: [node.role==manager]
     volumes:
-      # @todo is the attached storage fast enough? Or should the local SSD be used?
-      # result writing 100000 rows:
-      # on lokal disk on master: 1.9-2.1s
-      # on storage mount on master: ~2.0s
-      # on gluster mount on master: 2.2-2.5s
-      # on gluster mount on node: 2.2-2.8s
-      - ${STORAGE_DIR}/mariadb:/bitnami/mariadb
+      # performance result writing 100000 rows:
+      # on lokal disk on master: 1.9-2.1s (random numbers), 1.6s (static strings)
+      # on storage mount on master: ~2.0s, 1.7s
+      # on gluster mount on master: 2.2-2.5s, 1.7-2.7s
+      # on gluster mount on node: 2.2-2.8s, 3.4-4.6s
+      # on dedicated root with raid0 SATA: [not tested], 1.4s
+      - ${STORAGE_DIR}/mariadb:/bitnami/mariadb # decided for storage mount so the master can easily be recreated without importing data
       - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=master

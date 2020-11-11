@@ -58,6 +58,7 @@ runcmd:
  - export GLUSTER_VOLUME=${gluster_volume}
  - export LOCAL_IP_RANGE=${ip_range}
  - export MYSQL_ROOT_PASSWORD=${mysql_root_password}
+ - export NODE_TYPE=${node_type}
  - export PUBLIC_IP=${public_ip}
  - export STORAGE_MOUNT=/mnt/storage
  # load scripts & files from git, user-data can be limited to 16KB

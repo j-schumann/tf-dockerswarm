@@ -4,6 +4,7 @@
 # $ACME_MAIL = email address to register with letsencrypt
 # $GLUSTER_VOLUME = container-data - implies the mount point of the gluster volume (/mnt/$GLUSTER_VOLUME)
 # $MYSQL_ROOT_PASSWORD = intial root password for mariadb/galera cluster 
+# $NODE_TYPE = CX$$ | CPX$$ | CX$$-CEPH
 # $PUBLIC_IP = IP address of the swarm master
 # $STORAGE_MOUNT = /mnt/storage - directory to use for the volume brick, probably mount point of an attached cloud volume
 
@@ -20,7 +21,15 @@ cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
 
 # enp7s0 is specific to CPX servers, ens10 for CX servers
-export LOCALIP=`ip -o -4 addr show dev ens10 | cut -d' ' -f7 | cut -d'/' -f1`
+localInterface="ens10"
+if [ $NODE_TYPE ?? 'CPX' ]; then
+  localInterface="enp7s0"
+fi
+
+# @todo debug
+echo "local interface: $localInterface"
+
+export LOCALIP=`ip -o -4 addr show dev $localInterface | cut -d' ' -f7 | cut -d'/' -f1`
 docker swarm init --advertise-addr $LOCALIP
 
 # install docker-compose from github, ubuntu has an old version
