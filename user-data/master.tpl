@@ -53,14 +53,14 @@ users:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
- - export ACME_MAIL=${acme_mail}
- - export CLOUD_VOLUME_ID=${volume_id}
- - export GLUSTER_VOLUME=${gluster_volume}
- - export LOCAL_IP_RANGE=${ip_range}
+ - echo 'ACME_MAIL="${acme_mail}"' >> /etc/environment
+ - echo 'CLOUD_VOLUME_ID="${volume_id}"' >> /etc/environment
+ - echo 'GLUSTER_VOLUME="${gluster_volume}"' >> /etc/environment
+ - echo 'LOCAL_IP_RANGE="${ip_range}"' >> /etc/environment
+ - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
+ - echo 'PUBLIC_IP="${public_ip}"' >> /etc/environment
+ - echo 'STORAGE_MOUNT="/mnt/storage"' >> /etc/environment
  - export MYSQL_ROOT_PASSWORD=${mysql_root_password}
- - export NODE_TYPE=${node_type}
- - export PUBLIC_IP=${public_ip}
- - export STORAGE_MOUNT=/mnt/storage
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - /root/terraform-init/scripts/setup-master.sh

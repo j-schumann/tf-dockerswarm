@@ -52,8 +52,9 @@ services:
     volumes:
       # performance result writing 100000 rows:
       # on lokal disk on master: 1.9-2.1s (random numbers), 1.6s (static strings)
+      # on local disk on CEPH master: [not tested], 2.0-4.1s
       # on storage mount on master: ~2.0s, 1.7s
-      # on CEPH storage mount on master: [not tested], 2.0-2.5s
+      # on storage mount on CEPH master: [not tested], 2.0-2.5s
       # on gluster mount on master: 2.2-2.5s, 1.7-2.7s
       # on gluster mount on node: 2.2-2.8s, 3.4-4.6s
       # on dedicated root with raid0 SATA: [not tested], 1.37s (myisam) / 1.4-1.8s (innodb)
@@ -75,7 +76,7 @@ services:
       timeout: 5s
       retries: 6
 
-  # the slave is only used for backups to that using mysqldump does not
+  # the slave is only used for backups so that using mysqldump does not
   # lock tables too long for the applications
   dbslave:
     image: bitnami/mariadb:latest
