@@ -8,8 +8,18 @@
 # activate the gluster server using the cloud volume
 systemctl enable glusterd.service
 systemctl start glusterd.service
-mkdir -p $STORAGE_MOUNT/bricks/1 /mnt/$GLUSTER_VOLUME
-gluster volume create $GLUSTER_VOLUME swarmmaster:$STORAGE_MOUNT/bricks/1
+
+# to re-use an existing brick on the storage in a new gluster volume
+# with have to reset it and only keep the data
+brickPath="$STORAGE_MOUNT/bricks/1"
+if [ -d $brickPath ]; then
+    setfattr -x trusted.glusterfs.volume-id $brickPath
+    setfattr -x trusted.gfid $brickPath
+    rm -rf $brickPath/.glusterfs
+fi
+
+mkdir -p $brickPath /mnt/$GLUSTER_VOLUME
+gluster volume create $GLUSTER_VOLUME swarmmaster:$brickPath
 
 # @todo create wildcard format from $LOCAL_IP_RANGE
 gluster volume set $GLUSTER_VOLUME auth.allow 10.0.0.*
