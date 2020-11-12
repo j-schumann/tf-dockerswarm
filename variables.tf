@@ -11,7 +11,7 @@ variable "os_image" {
 }
 
 variable "master_type" {
-    default = "cx21-ceph"
+    default = "cpx21"
 }
 
 variable "node_type" {
