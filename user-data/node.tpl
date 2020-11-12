@@ -57,6 +57,9 @@ runcmd:
  - export LOCAL_IP_RANGE=${ip_range}
  - export MASTER_IPV4_ADDRESS=${master_ip}
  - export NODE_TYPE=${node_type}
+ - export MSMTP_HOST=${msmtp_host}
+ - export MSMTP_USER=${msmtp_user}
+ - export MSMTP_PASSWORD=${msmtp_password}
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - /root/terraform-init/scripts/setup-node.sh

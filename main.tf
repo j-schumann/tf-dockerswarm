@@ -34,12 +34,16 @@ resource "hcloud_server" "master" {
   location    = var.location
   user_data   = templatefile("${path.module}/user-data/master.tpl", {
     acme_mail           = var.acme_mail
+    admin_password      = var.admin_password
     gluster_volume      = var.volume_name
-    ip_range            = var.ip_range,
+    ip_range            = var.ip_range
+    msmtp_host          = var.msmtp_host
+    msmtp_user          = var.msmtp_user
+    msmtp_password      = var.msmtp_password
     mysql_root_password = var.mysql_root_password
     node_type           = var.master_type
     public_ip           = hcloud_floating_ip.public_ip.ip_address
-    ssh_public_key      = hcloud_ssh_key.root.public_key,
+    ssh_public_key      = hcloud_ssh_key.root.public_key
     volume_id           = hcloud_volume.storage.id
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ]
@@ -78,6 +82,9 @@ resource "hcloud_server" "node" {
   user_data   = templatefile("${path.module}/user-data/node.tpl", {
     gluster_volume = var.volume_name
     ip_range       = var.ip_range,
+    msmtp_host     = var.msmtp_host
+    msmtp_user     = var.msmtp_user
+    msmtp_password = var.msmtp_password
     node_type      = var.node_type
     master_ip      = hcloud_server_network.master_network.ip
     ssh_public_key = hcloud_ssh_key.root.public_key,

@@ -21,8 +21,8 @@ packages:
   - m4
   - make
   - mc
-#  - msmtp
-#  - msmtp-mta
+  - msmtp
+  - msmtp-mta
   - rsync
   - rsyslog
   - sudo
@@ -60,7 +60,11 @@ runcmd:
  - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
  - echo 'PUBLIC_IP="${public_ip}"' >> /etc/environment
  - echo 'STORAGE_MOUNT="/mnt/storage"' >> /etc/environment
- - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
+ - set -a; source /etc/environment; set +a;
+ - export ADMIN_PASSWORD=${admin_password}
+ - export MSMTP_HOST=${msmtp_host}
+ - export MSMTP_USER=${msmtp_user}
+ - export MSMTP_PASSWORD=${msmtp_password}
  - export MYSQL_ROOT_PASSWORD=${mysql_root_password}
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init

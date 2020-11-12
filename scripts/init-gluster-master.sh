@@ -16,6 +16,9 @@ if [ -d $brickPath ]; then
     setfattr -x trusted.glusterfs.volume-id $brickPath
     setfattr -x trusted.gfid $brickPath
     rm -rf $brickPath/.glusterfs
+    
+    # prevent the nodes receiving an old token
+    rm $brickPath/join-token.txt 2> /dev/null
 fi
 
 mkdir -p $brickPath /mnt/$GLUSTER_VOLUME

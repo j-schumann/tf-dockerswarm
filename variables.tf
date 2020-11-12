@@ -4,6 +4,10 @@ variable "hcloud_token" {}
 
 variable "acme_mail" {}
 
+variable "admin_password" {}
+variable "msmtp_host" {}
+variable "msmtp_user" {}
+variable "msmtp_password" {}
 variable "mysql_root_password" {}
 
 variable "os_image" {

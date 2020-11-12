@@ -59,8 +59,6 @@ echo "@reboot root /usr/local/sbin/runonce.sh 2>&1 >> /var/log/runonce.log" >> /
 echo "#!/bin/bash
 sleep 300
 /root/terraform-init/stacks/deploy-main.sh 2>&1 >> /var/log/deploy.log" >> /etc/local/runonce.d/deploy-main-stack.sh
-# @todo debug
-echo $GLUSTER_VOLUME
 chmod ug+x /etc/local/runonce.d/deploy-main-stack.sh
 
 #docker stack deploy main -c <(docker-compose -f $parent_path/../stacks/main.yaml --env-file $env_file config)
