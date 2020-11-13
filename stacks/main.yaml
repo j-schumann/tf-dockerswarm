@@ -153,8 +153,8 @@ services:
         - traefik.http.services.adminer-service.loadbalancer.server.port=8080
         - traefik.http.routers.adminer-https.middlewares=adminer-auth
         # apt-get install apache2-utils
-        # echo $(htpasswd -nb user password) | sed -e s/\\$/\\$\\$/g
-        - "traefik.http.middlewares.adminer-auth.basicauth.users=admin:$$apr1$$wLhoY3As$$GTIp6eL01pYtk5fkcQ4Qx0"
+        # echo 
+        - "traefik.http.middlewares.adminer-auth.basicauth.users=${BASIC_CREDENTIALS}"
     environment:
       - ADMINER_DEFAULT_SERVER=dbmaster
     networks:

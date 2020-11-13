@@ -2,6 +2,7 @@
 
 # required variables:
 # $ACME_MAIL = email address to register with letsencrypt
+# $ADMIN_PASSWORD = basic auth password for admin services (PhpMyAdmin etc.)
 # $GLUSTER_VOLUME = container-data - implies the mount point of the gluster volume (/mnt/$GLUSTER_VOLUME)
 # $MYSQL_ROOT_PASSWORD = intial root password for mariadb/galera cluster 
 # $NODE_TYPE = CX$$ | CPX$$ | CX$$-CEPH
@@ -39,23 +40,27 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 # shared, encrypted mesh network for all containers on all nodes
 docker network create --opt encrypted --driver overlay traefik-net
 
+# basic auth password for PhpMyAdmin etc.
+ADMIN_CREDENTIALS=`htpasswd -nb admin $ADMIN_PASSOWRD) | sed -e s/\\$/\\$\\$/g`
+
 # prepare the .env file, the ENV variables are only set now in the cloud-init boot
 sed -i \
-    -e "s#PUBLIC_IP#$PUBLIC_IP#g" \
     -e "s#ACME_MAIL#$ACME_MAIL#g" \
+    -e "s#ADMIN_CREDENTIALS#$ADMIN_CREDENTIALS#g" \
     -e "s#GLUSTER_VOLUME#$GLUSTER_VOLUME#g" \
     -e "s#MYSQL_ROOT_PASSWORD#$MYSQL_ROOT_PASSWORD#g" \
+    -e "s#PUBLIC_IP#$PUBLIC_IP#g" \
     -e "s#STORAGE_MOUNT#$STORAGE_MOUNT#g" \
     "$env_file"
 
 mkdir -p /etc/local/runonce.d/ran
 cp $parent_path/../server-files/usr/local/sbin/runonce.sh /usr/local/sbin/
 chmod ug+x /usr/local/sbin/runonce.sh
-echo "@reboot root /usr/local/sbin/runonce.sh" >> /etc/cron.d/runonce
+echo "@reboot root /usr/local/sbin/runonce.sh 2>&1 >> /var/log/runonce.log" >> /etc/cron.d/runonce
 
 # we don't want to deploy the stack right now but only after the reboot
 # triggered by cloud-init and an additional 5min wait time to give the nodes
-# time to be ready, to spread the services on the nodes
+# time to be ready & mount the Gluster volume, to spread the services on the nodes
 echo "#!/bin/bash
 sleep 300
 /root/terraform-init/stacks/deploy-main.sh" >> /etc/local/runonce.d/deploy-main-stack.sh

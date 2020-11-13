@@ -53,10 +53,14 @@ users:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
- - export GLUSTER_VOLUME=${gluster_volume}
- - export LOCAL_IP_RANGE=${ip_range}
- - export MASTER_IPV4_ADDRESS=${master_ip}
- - export NODE_TYPE=${node_type}
+ # set persistent env vars
+ - echo 'GLUSTER_VOLUME="${gluster_volume}"' >> /etc/environment
+ - echo 'LOCAL_IP_RANGE="${ip_range}"' >> /etc/environment
+ - echo 'MASTER_IPV4_ADDRESS="${master_ip}"' >> /etc/environment
+ - echo 'MASTER_NAME="${master_name}"' >> /etc/environment
+ - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
+ - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
+ # set env vars we only use during first boot 
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
  - export MSMTP_PASSWORD=${msmtp_password}

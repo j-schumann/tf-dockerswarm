@@ -14,6 +14,10 @@ variable "os_image" {
     default = "ubuntu-20.04"
 }
 
+variable "name_prefix" {
+    default = "swarm"
+}
+
 variable "master_type" {
     default = "cx21"
 }

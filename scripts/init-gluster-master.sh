@@ -22,7 +22,9 @@ if [ -d $brickPath ]; then
 fi
 
 mkdir -p $brickPath /mnt/$GLUSTER_VOLUME
-gluster volume create $GLUSTER_VOLUME swarmmaster:$brickPath
+
+# create the volume in the given path, hostname is required, "localhost" is not allowed
+gluster volume create $GLUSTER_VOLUME `hostname`:$brickPath
 
 # @todo create wildcard format from $LOCAL_IP_RANGE
 gluster volume set $GLUSTER_VOLUME auth.allow 10.0.0.*
@@ -30,6 +32,5 @@ gluster volume set $GLUSTER_VOLUME auth.allow 10.0.0.*
 gluster volume start $GLUSTER_VOLUME
 
 # mount now and also automatically after reboot
-# @todo customize hostname?
-mount.glusterfs swarmmaster:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME
-echo "localhost:container-data /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=15,backupvolfile-server=localhost 0 0" >> /etc/fstab
+mount.glusterfs localhost:/$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME
+echo "localhost:$GLUSTER_VOLUME /mnt/$GLUSTER_VOLUME glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=15,backupvolfile-server=localhost 0 0" >> /etc/fstab

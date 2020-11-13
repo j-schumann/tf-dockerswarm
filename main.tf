@@ -28,7 +28,7 @@ resource "hcloud_network_subnet" "subnet" {
 
 # Master Setup
 resource "hcloud_server" "master" {
-  name        = "swarmmaster"
+  name        = "${var.name_prefix}master"
   image       = var.os_image
   server_type = var.master_type
   location    = var.location
@@ -75,18 +75,19 @@ resource "hcloud_floating_ip_assignment" "master_floating_ip" {
 # Worker Setup
 resource "hcloud_server" "node" {
   count       = var.node_count
-  name        = "swarmnode-${count.index + 1}"
+  name        = "${var.name_prefix}node-${count.index + 1}"
   image       = var.os_image
   server_type = var.node_type
   location    = var.location
   user_data   = templatefile("${path.module}/user-data/node.tpl", {
     gluster_volume = var.volume_name
     ip_range       = var.ip_range,
+    master_ip      = hcloud_server_network.master_network.ip
+    master_name    = "${var.name_prefix}master"
     msmtp_host     = var.msmtp_host
     msmtp_user     = var.msmtp_user
     msmtp_password = var.msmtp_password
     node_type      = var.node_type
-    master_ip      = hcloud_server_network.master_network.ip
     ssh_public_key = hcloud_ssh_key.root.public_key,
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ] 

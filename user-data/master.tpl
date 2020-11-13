@@ -10,6 +10,7 @@ package_update: true
 package_upgrade: true
 
 packages:
+  - apache2-utils
   - bc
   - curl
   - docker-ce
@@ -53,6 +54,7 @@ users:
     - ALL=(ALL) NOPASSWD:ALL
 
 runcmd:
+ # set persistent env vars
  - echo 'ACME_MAIL="${acme_mail}"' >> /etc/environment
  - echo 'CLOUD_VOLUME_ID="${volume_id}"' >> /etc/environment
  - echo 'GLUSTER_VOLUME="${gluster_volume}"' >> /etc/environment
@@ -60,8 +62,8 @@ runcmd:
  - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
  - echo 'PUBLIC_IP="${public_ip}"' >> /etc/environment
  - echo 'STORAGE_MOUNT="/mnt/storage"' >> /etc/environment
- # - set -a; source /etc/environment; set +a;
  - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
+ # set env vars we only use during first boot
  - export ADMIN_PASSWORD=${admin_password}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
