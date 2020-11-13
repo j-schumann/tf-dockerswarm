@@ -42,7 +42,7 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 docker network create --opt encrypted --driver overlay traefik-net
 
 # basic auth password for PhpMyAdmin etc.
-ADMIN_CREDENTIALS=`htpasswd -nb admin "$ADMIN_PASSOWRD" | sed -e s/\\$/\\$\\$/g`
+ADMIN_CREDENTIALS=$(htpasswd -nb admin "$ADMIN_PASSOWRD" | sed -e s/\\$/\\$\\$/g)
 
 # prepare the .env file, the ENV variables are only set now in the cloud-init boot
 sed -i \

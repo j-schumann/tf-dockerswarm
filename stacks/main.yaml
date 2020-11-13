@@ -132,7 +132,7 @@ services:
       - ${CONTAINER_DATA}/nginx/site.conf:/etc/nginx/conf.d/site.conf
     networks:
       - traefik-net
-      
+
   appservice:
     image: php:7-fpm
     deploy:
@@ -141,7 +141,9 @@ services:
         constraints: [node.role==worker]
     volumes:
       - /var/www/html:/var/www/html
-        
+    networks:
+      - traefik-net
+
   adminer:
     image: adminer:4.7
     deploy:
