@@ -54,6 +54,7 @@ services:
       # on lokal disk on master: 1.9-2.1s (random numbers), 1.6s (static strings)
       # on local disk on CEPH master: [not tested], 2.0-4.1s
       # on storage mount on master: ~2.0s, 1.7s
+      # on storage mount on CPX master: [not tested], 2.1-2.9s
       # on storage mount on CEPH master: [not tested], 2.0-2.5s
       # on gluster mount on master: 2.2-2.5s, 1.7-2.7s
       # on gluster mount on node: 2.2-2.8s, 3.4-4.6s

@@ -60,7 +60,8 @@ runcmd:
  - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
  - echo 'PUBLIC_IP="${public_ip}"' >> /etc/environment
  - echo 'STORAGE_MOUNT="/mnt/storage"' >> /etc/environment
- - set -a; source /etc/environment; set +a;
+ # - set -a; source /etc/environment; set +a;
+ - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
  - export ADMIN_PASSWORD=${admin_password}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
