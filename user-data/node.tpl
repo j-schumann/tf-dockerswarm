@@ -67,12 +67,9 @@ runcmd:
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git /root/terraform-init
  - /root/terraform-init/scripts/setup-node.sh
- - echo "$LOCAL_IP_RANGE $GLUSTER_VOLUME $MASTER_IPV4_ADDRESS" >> /root/envvars
 
 power_state:
   delay: "now"
   mode: reboot
   message: First reboot after cloud-init
   condition: True
-
-final_message: "cloud-init finished after $UPTIME seconds"

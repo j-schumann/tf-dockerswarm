@@ -127,10 +127,21 @@ services:
         - traefik.http.routers.website-https.service=website-service
         - traefik.http.services.website-service.loadbalancer.server.port=80
     volumes:
-      - /var/www/html/index.html:/usr/share/nginx/html/index.html
+#      - /var/www/html/index.html:/usr/share/nginx/html/index.html
+      - /var/www/html:/var/www/html
+      - ${CONTAINER_DATA}/nginx/site.conf:/etc/nginx/conf.d/site.conf
     networks:
       - traefik-net
-
+      
+  appservice:
+    image: php:7-fpm
+    deploy:
+      replicas: 2
+      placement:
+        constraints: [node.role==worker]
+    volumes:
+      - /var/www/html:/var/www/html
+        
   adminer:
     image: adminer:4.7
     deploy:

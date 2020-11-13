@@ -13,13 +13,14 @@ parent_path=`dirname "$0"`
 env_file="$parent_path/../stacks/.env"
 
 # default directories for the container data
-mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config} $STORAGE_MOUNT/mariadb
+mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,nginx} $STORAGE_MOUNT/mariadb
 
 # required for mariadb to start
 chown -R 1001:1001 $STORAGE_MOUNT/mariadb
 
 cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
+cp $parent_path/../server-files/config/nginx/site.conf /mnt/$GLUSTER_VOLUME/nginx/
 
 # enp7s0 is specific to CPX servers, ens10 for CX servers
 localInterface="ens10"
@@ -41,7 +42,7 @@ docker swarm join-token worker -q > /mnt/$GLUSTER_VOLUME/join-token.txt
 docker network create --opt encrypted --driver overlay traefik-net
 
 # basic auth password for PhpMyAdmin etc.
-ADMIN_CREDENTIALS=`htpasswd -nb admin $ADMIN_PASSOWRD) | sed -e s/\\$/\\$\\$/g`
+ADMIN_CREDENTIALS=`htpasswd -nb admin "$ADMIN_PASSOWRD" | sed -e s/\\$/\\$\\$/g`
 
 # prepare the .env file, the ENV variables are only set now in the cloud-init boot
 sed -i \

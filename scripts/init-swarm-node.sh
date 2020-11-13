@@ -25,3 +25,4 @@ docker swarm join --token `cat /mnt/$GLUSTER_VOLUME/join-token.txt` $MASTER_IPV4
 # @todo remove debug
 mkdir -p /var/www/html
 hostname > /var/www/html/index.html
+echo "<?php echo '`hostname` - '.gethostname();" >> /var/www/html/test.php
