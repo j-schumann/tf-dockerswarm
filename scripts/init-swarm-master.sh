@@ -3,6 +3,8 @@
 # required variables:
 # $ACME_MAIL = email address to register with letsencrypt
 # $ADMIN_PASSWORD = basic auth password for admin services (PhpMyAdmin etc.)
+# $DOCKER_HUB_USER = username for hub.docker.com
+# $DOCKER_HUB_TOKEN = access token for hub.docker.com
 # $GLUSTER_VOLUME = container-data - implies the mount point of the gluster volume (/mnt/$GLUSTER_VOLUME)
 # $MYSQL_ROOT_PASSWORD = intial root password for mariadb/galera cluster 
 # $NODE_TYPE = CX$$ | CPX$$ | CX$$-CEPH
@@ -21,6 +23,9 @@ chown -R 1001:1001 $STORAGE_MOUNT/mariadb
 cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
 cp $parent_path/../server-files/config/nginx/site.conf /mnt/$GLUSTER_VOLUME/nginx/
+
+# login to hub.docker.com to create the credentials file
+echo $DOCKER_HUB_TOKEN | docker login --username $DOCKER_HUB_USER --password-stdin
 
 # enp7s0 is specific to CPX servers, ens10 for CX servers
 localInterface="ens10"
@@ -54,6 +59,7 @@ sed -i \
     -e "s#STORAGE_MOUNT#$STORAGE_MOUNT#g" \
     "$env_file"
 
+# setup infrastructure for tasks that are run once after the next reboot
 mkdir -p /etc/local/runonce.d/ran
 cp $parent_path/../server-files/usr/local/sbin/runonce.sh /usr/local/sbin/
 chmod ug+x /usr/local/sbin/runonce.sh

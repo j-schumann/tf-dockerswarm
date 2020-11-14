@@ -9,6 +9,7 @@ parent_path=`dirname "$0"`
 cp $parent_path/../server-files/usr/local/sbin/fail2ban-status.sh /usr/local/sbin/fail2ban-status.sh
 cp $parent_path/../server-files/etc/ufw/applications.d/* /etc/ufw/applications.d/
 
+# @todo extract to new script
 cp $parent_path/../server-files/etc/msmtprc /etc/
 sed -i \
     -e "s#MSMTP_HOST#$MSMTP_HOST#g" \

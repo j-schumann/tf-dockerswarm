@@ -65,6 +65,8 @@ runcmd:
  - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
  # set env vars we only use during first boot
  - export ADMIN_PASSWORD=${admin_password}
+ - export DOCKER_HUB_USER=${docker_hub_user}
+ - export DOCKER_HUB_TOKEN=${docker_hub_token}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
  - export MSMTP_PASSWORD=${msmtp_password}

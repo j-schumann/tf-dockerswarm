@@ -2,14 +2,17 @@
 # or using the -var="hcloud_token=..." CLI option
 variable "hcloud_token" {}
 
+# further variables that hold credentials etc and have no defaults 
 variable "acme_mail" {}
-
 variable "admin_password" {}
+variable "docker_hub_user" {}
+variable "docker_hub_token" {}
 variable "msmtp_host" {}
 variable "msmtp_user" {}
 variable "msmtp_password" {}
 variable "mysql_root_password" {}
 
+# variables to customize the cluster
 variable "os_image" {
     default = "ubuntu-20.04"
 }
@@ -19,7 +22,7 @@ variable "name_prefix" {
 }
 
 variable "master_type" {
-    default = "cx21"
+    default = "cpx21"
 }
 
 variable "node_type" {
@@ -27,7 +30,7 @@ variable "node_type" {
 }
 
 variable "node_count" {
-    default = "2"
+    default = "4"
 }
 
 variable "location" {

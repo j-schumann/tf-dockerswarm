@@ -144,6 +144,15 @@ services:
     networks:
       - traefik-net
 
+  privateservice:      
+    image: jschumanndd/fcp-johannstadt-backend
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role==worker]
+    networks:
+      - traefik-net
+
   adminer:
     image: adminer:4.7
     deploy:

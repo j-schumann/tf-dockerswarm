@@ -35,6 +35,8 @@ resource "hcloud_server" "master" {
   user_data   = templatefile("${path.module}/user-data/master.tpl", {
     acme_mail           = var.acme_mail
     admin_password      = var.admin_password
+    docker_hub_user     = var.docker_hub_user
+    docker_hub_token    = var.docker_hub_token
     gluster_volume      = var.volume_name
     ip_range            = var.ip_range
     msmtp_host          = var.msmtp_host
