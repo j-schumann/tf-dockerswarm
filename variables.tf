@@ -22,7 +22,7 @@ variable "name_prefix" {
 }
 
 variable "master_type" {
-    default = "cpx21"
+    default = "cx21"
 }
 
 variable "node_type" {
@@ -30,7 +30,7 @@ variable "node_type" {
 }
 
 variable "node_count" {
-    default = "4"
+    default = "2"
 }
 
 variable "location" {
