@@ -20,6 +20,9 @@ mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,nginx,logging/elastic,logg
 # required for mariadb to start
 chown -R 1001:1001 $STORAGE_MOUNT/mariadb
 
+# required for elasticsearch to start
+chown -R 1000:1000 /mnt/$GLUSTER_VOLUME/logging/elastic
+
 cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
 cp $parent_path/../server-files/config/nginx/site.conf /mnt/$GLUSTER_VOLUME/nginx/

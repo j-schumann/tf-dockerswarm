@@ -181,10 +181,12 @@ services:
       - $CONTAINER_DATA/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - $CONTAINER_DATA/logging/elastic:/usr/share/elasticsearch/data
     environment:
-      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      - ELASTIC_PASSWORD=testweise
+      - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
       # Use single node discovery in order to disable production mode and avoid bootstrap checks
       # see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
-      discovery.type: single-node
+      - discovery.type=single-node
+      - TZ
     networks:
       - traefik-net
 
@@ -194,12 +196,18 @@ services:
       replicas: 1
       placement:
         constraints: [node.role==worker]
+    ports:
+      - "5000:5000/tcp"
+      - "5000:5000/udp"
+      - "5001:5001/udp"
+      - "9600:9600"
     volumes:
       - $CONTAINER_DATA/logging/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
       - $CONTAINER_DATA/logging/config/pipeline:/usr/share/logstash/pipeline:ro
     environment:
       - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
       - bootstrap.memory_lock=true
+      - TZ
     networks:
       - traefik-net
 
@@ -222,16 +230,19 @@ services:
         - traefik.http.routers.kibana-https.tls=true
         - traefik.http.routers.kibana-https.tls.certresolver=le
         - traefik.http.routers.kibana-https.service=kibana-service
-        - traefik.http.services.kibana-service.loadbalancer.server.port=8080
-        - traefik.http.routers.kibana-https.middlewares=kibana-auth
-        - traefik.http.middlewares.kibana-auth.basicauth.users=${BASIC_CREDENTIALS}
+        - traefik.http.services.kibana-service.loadbalancer.server.port=5601
+#        - traefik.http.routers.kibana-https.middlewares=kibana-auth
+#        - traefik.http.middlewares.kibana-auth.basicauth.users=${BASIC_CREDENTIALS}
+    environment:
+      - TZ
     volumes:
       - $CONTAINER_DATA/logging/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
       - traefik-net
 
   logspout:
-    image: gliderlabs/logspout:master
+    # glidlerlabs/logspout does not contain the logstash adapter
+    image: bekt/logspout-logstash:latest
     deploy:
       # deploy on each machine
       mode: global
@@ -239,13 +250,14 @@ services:
         limits:
           cpus: '0.20'
           memory: 256M
-        reservations:
+#        reservations:
 #          cpus: '0.10'
 #          memory: 128M
     environment:
-      LOGSTASH_TAGS: docker-elk
-      ROUTE_URIS: logstash://logstash:5000
-      SYSLOG_FORMAT: rfc3164
+      - LOGSTASH_TAGS=docker-elk
+      - ROUTE_URIS=logstash://logstash:5000
+      - SYSLOG_FORMAT=rfc3164
+      - TZ
     volumes:
       - /etc/hostname:/etc/host_hostname:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
