@@ -38,7 +38,7 @@ export LOCALIP=`ip -o -4 addr show dev $localInterface | cut -d' ' -f7 | cut -d'
 docker swarm init --advertise-addr $LOCALIP
 
 # install docker-compose from github, ubuntu has an old version
-curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 # put the token on the shared volume so nodes can join the swarm
@@ -49,7 +49,7 @@ docker network create --opt encrypted --driver overlay traefik-net
 
 # basic auth password for PhpMyAdmin etc.
 # @todo double-$ required for direct injection in main.yaml: | sed -e s/\\$/\\$\\$/g
-ADMIN_CREDENTIALS=$(htpasswd -nb admin `echo $ADMIN_PASSOWRD`)
+ADMIN_CREDENTIALS=$(htpasswd -nb admin `echo $ADMIN_PASSWORD`)
 
 # prepare the .env file, the ENV variables are only set now in the cloud-init boot
 sed -i \
