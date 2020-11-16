@@ -15,7 +15,7 @@ parent_path=`dirname "$0"`
 env_file="$parent_path/../stacks/.env"
 
 # default directories for the container data
-mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,nginx} $STORAGE_MOUNT/mariadb
+mkdir -p /mnt/$GLUSTER_VOLUME/{traefik,mariadb/config,nginx,logging/elastic,logging/config} $STORAGE_MOUNT/mariadb
 
 # required for mariadb to start
 chown -R 1001:1001 $STORAGE_MOUNT/mariadb
@@ -23,6 +23,7 @@ chown -R 1001:1001 $STORAGE_MOUNT/mariadb
 cp $parent_path/../server-files/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 cp $parent_path/../server-files/config/mariadb/my_custom.cnf /mnt/$GLUSTER_VOLUME/mariadb/config/
 cp $parent_path/../server-files/config/nginx/site.conf /mnt/$GLUSTER_VOLUME/nginx/
+cp -R $parent_path/../server-files/config/logging /mnt/$GLUSTER_VOLUME/logging/config
 
 # login to hub.docker.com to create the credentials file
 echo $DOCKER_HUB_TOKEN | docker login --username $DOCKER_HUB_USER --password-stdin
