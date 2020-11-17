@@ -28,7 +28,7 @@ resource "hcloud_network_subnet" "subnet" {
 
 # Master Setup
 resource "hcloud_server" "master" {
-  name        = "${var.name_prefix}master"
+  name        = "${var.cluster_name_prefix}master"
   image       = var.os_image
   server_type = var.master_type
   location    = var.location
@@ -88,7 +88,6 @@ resource "hcloud_server" "assistant" {
     assistant_volume_name = var.assistant_volume_name
     cluster_name_prefix   = var.cluster_name_prefix
     elastic_password      = var.elastic_password
-    gluster_volume        = var.volume_name
     ip_range              = var.ip_range
     master_ip             = hcloud_server_network.master_network.ip
     msmtp_host            = var.msmtp_host
@@ -98,15 +97,14 @@ resource "hcloud_server" "assistant" {
     setup_script_path     = var.setup_script_path
     shared_volume_name    = var.shared_volume_name
     ssh_public_key        = hcloud_ssh_key.root.public_key
-    volume_id             = hcloud_volume.secondary_volume.id
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ] 
 }
 
 resource "hcloud_volume" "assistant_volume" {
-  name     = var.secondary_volume_name
+  name     = var.assistant_volume_name
   location = var.location
-  size     = var.secondary_volume_size
+  size     = var.assistant_volume_size
   format   = "xfs"
 }
 
@@ -152,6 +150,10 @@ resource "hcloud_server_network" "node_network" {
 output "master_ipv4" {
   description = "Swarmmaster IP address"
   value = hcloud_server.master.ipv4_address
+}
+output "assistant_ipv4" {
+  description = "Swarmassistant IP address"
+  value = hcloud_server.assistant.ipv4_address
 }
 
 output "node_ips" {

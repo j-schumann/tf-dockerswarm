@@ -54,8 +54,8 @@ users:
 
 runcmd:
  # set persistent env vars
- - echo 'ASSISTANT_VOLUME_ID="${shared_volume_id}"' >> /etc/environment
- - echo 'ASSISTANT_VOLUME_NAME="${shared_volume_name}"' >> /etc/environment
+ - echo 'ASSISTANT_VOLUME_ID="${assistant_volume_id}"' >> /etc/environment
+ - echo 'ASSISTANT_VOLUME_NAME="${assistant_volume_name}"' >> /etc/environment
  - echo 'CLUSTER_NAME_PREFIX="${cluster_name_prefix}"' >> /etc/environment
  - echo 'LOCAL_IP_RANGE="${ip_range}"' >> /etc/environment
  - echo 'MASTER_IPV4_ADDRESS="${master_ip}"' >> /etc/environment
