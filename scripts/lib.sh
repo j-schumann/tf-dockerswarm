@@ -204,7 +204,7 @@ setupGlusterServerUfw() {
 # mount the cloud volume now and automatically after reboot
 setupSharedVolume() {
     echo "mounting the attached cloud storage $SHARED_VOLUME_NAME ($SHARED_VOLUME_ID)"
-    local mountPoint="$(getShareVolumeLocalMount)"
+    local mountPoint="$(getSharedVolumeLocalMount)"
     mkdir -p $mountPoint
 
     echo "/dev/disk/by-id/scsi-0HC_Volume_$SHARED_VOLUME_ID $mountPoint xfs discard,nofail,defaults 0 0" >> /etc/fstab
