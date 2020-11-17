@@ -10,14 +10,13 @@ package_update: true
 package_upgrade: true
 
 packages:
-  - apache2-utils
   - bc
   - curl
   - docker-ce
   - docker-ce-cli
   - fail2ban
   - git
-  - glusterfs-server
+  - glusterfs-client
   - logrotate
   - m4
   - make
@@ -55,30 +54,26 @@ users:
 
 runcmd:
  # set persistent env vars
- - echo 'ACME_MAIL="${acme_mail}"' >> /etc/environment
+ - echo 'ASSISTANT_VOLUME_ID="${shared_volume_id}"' >> /etc/environment
+ - echo 'ASSISTANT_VOLUME_NAME="${shared_volume_name}"' >> /etc/environment
  - echo 'CLUSTER_NAME_PREFIX="${cluster_name_prefix}"' >> /etc/environment
  - echo 'LOCAL_IP_RANGE="${ip_range}"' >> /etc/environment
- - echo 'NODE_COUNT="${node_count}"' >> /etc/environment
+ - echo 'MASTER_IPV4_ADDRESS="${master_ip}"' >> /etc/environment
  - echo 'NODE_TYPE="${node_type}"' >> /etc/environment
- - echo 'PUBLIC_IP="${public_ip}"' >> /etc/environment
  - echo 'SETUP_SCRIPT_PATH="${setup_script_path}"' >> /etc/environment
- - echo 'SHARED_VOLUME_ID="${shared_volume_id}"' >> /etc/environment
  - echo 'SHARED_VOLUME_NAME="${shared_volume_name}"' >> /etc/environment
  - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
  # set env vars we only use during first boot
- - export ADMIN_PASSWORD=${admin_password}
- - export DOCKER_HUB_USER=${docker_hub_user}
- - export DOCKER_HUB_TOKEN=${docker_hub_token}
+ - export ELASTIC_PASSWORD=${elastic_password}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
  - export MSMTP_PASSWORD=${msmtp_password}
- - export MYSQL_ROOT_PASSWORD=${mysql_root_password}
  # load scripts & files from git, user-data can be limited to 16KB
  - git clone https://github.com/j-schumann/tf-dockerswarm.git $SETUP_SCRIPT_PATH
- - $SETUP_SCRIPT_PATH/scripts/setup-master.sh
+ - $SETUP_SCRIPT_PATH/scripts/setup-assistant.sh
 
 power_state:
   delay: "now"
   mode: reboot
-  message: First reboot by cloud-init
+  message: First reboot after cloud-init
   condition: True

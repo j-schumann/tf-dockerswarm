@@ -9,4 +9,4 @@ xpack.monitoring.elasticsearch.hosts: [ "http://es-logging:9200" ]
 #
 xpack.monitoring.enabled: true
 xpack.monitoring.elasticsearch.username: logstash_system
-xpack.monitoring.elasticsearch.password: iRHoZS6mBKj5eHRBm4ky
+xpack.monitoring.elasticsearch.password: LOGSTASH_PASSWORD

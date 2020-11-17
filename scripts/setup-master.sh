@@ -1,24 +1,33 @@
 #!/bin/bash
 
 # required variables:
+# $LOCAL_IP_RANGE = 10.0.0.0/24 - which addesses to allow for access from other swarm machines
+# $MYSQL_ROOT_PASSWORD = intial root password for mariadb/galera cluster 
+# $NODE_TYPE = CX$$ | CPX$$ | CX$$-CEPH
 # $PUBLIC_IP = IP address of the swarm master
+# $SHARED_VOLUME_ID = 12345678 - Hetzner Cloud Volume ID, used to find the disk
+# $SHARED_VOLUME_NAME = container-data - name for the glusterfs volume, will also be used for the mount point
 
-parent_path=`dirname "$0"`
+. $SETUP_SCRIPT_PATH/scripts/lib.sh
 
-echo "Setting the floating IP $PUBLIC_IP as default..."
-cp $parent_path/../server-files/etc/netplan/60-floating-ip.yaml /etc/netplan/
-sed -i "s/PUBLIC_IP/$PUBLIC_IP/g" /etc/netplan/60-floating-ip.yaml
-# don't use "netplan apply", the final cloud-init reboot is enough,
-# it causes loss of the ens10/enp7s0 interface... 
+# default setup
+prepareBasicSecurity
+prepareDockerConfig
+setupMsmtp
+setupRunOnce
 
-echo "Setting up security..."
-$parent_path/init-security-master.sh
+# replace the automatically assigned IP of this server with the floating IP
+setPublicIp $PUBLIC_IP
 
-echo "Mounting the attached cloud volume..."
-$parent_path/init-storage-mount.sh
+# requires prepareBasicSecurity 
+setupSwarmMasterUfw
+setupGlusterServerUfw
 
-echo "Configuring the GlusterFS Server..."
-$parent_path/init-gluster-master.sh
+# mount the cloud volume so it is available for DB storage and Gluster
+setupSharedVolume
 
-echo "Creating the Docker Swarm..."
-$parent_path/init-swarm-master.sh
+# requires setupGlusterServerUfw + setupSharedVolume
+setupGlusterServer
+
+# requires all previous
+setupSwarmMaster

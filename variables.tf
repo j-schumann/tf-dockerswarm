@@ -2,22 +2,19 @@
 # or using the -var="hcloud_token=..." CLI option
 variable "hcloud_token" {}
 
-# further variables that hold credentials etc and have no defaults 
+# further variables that hold credentials/private data and have no defaults 
 variable "acme_mail" {}
 variable "admin_password" {}
 variable "docker_hub_user" {}
 variable "docker_hub_token" {}
+variable "elastic_password" {}
 variable "msmtp_host" {}
 variable "msmtp_user" {}
 variable "msmtp_password" {}
 variable "mysql_root_password" {}
 
 # variables to customize the cluster
-variable "os_image" {
-    default = "ubuntu-20.04"
-}
-
-variable "name_prefix" {
+variable "cluster_name_prefix" {
     default = "swarm"
 }
 
@@ -30,21 +27,38 @@ variable "node_type" {
 }
 
 variable "node_count" {
-    default = "2"
+    default = "1"
 }
 
 variable "location" {
     default = "fsn1"
 }
 
+variable "shared_volume_size" {
+    default = "10"
+}
+
+variable "assistant_volume_size" {
+    default = "10"
+}
+
+# variables that probably dont need to be modified
 variable "ip_range" {
     default = "10.0.0.0/24"
 }
 
-variable "volume_name" {
-    default = "container-data"
+variable "shared_volume_name" {
+    default = "shared-data"
 }
 
-variable "volume_size" {
-    default = "10"
+variable "assistant_volume_name" {
+    default = "assistant-data"
+}
+
+variable "os_image" {
+    default = "ubuntu-20.04"
+}
+
+variable "setup_script_path" {
+    default = "/root/setup"
 }

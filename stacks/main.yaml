@@ -16,21 +16,21 @@ services:
         mode: host
     deploy:
       placement:
-        constraints: [node.role==manager]
+        constraints: [node.role == manager]
     environment:
       - TZ
     volumes:
       # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Mount the volume to store the certificates
-      - ${CONTAINER_DATA}/traefik:/certificates
+      - $SHARED_VOLUME/traefik:/certificates
     command:
       - --providers.docker
       - --providers.docker.exposedbydefault=false
       - --providers.docker.swarmmode
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
-      - --certificatesresolvers.le.acme.email=${LETSENCRYPT_MAIL}
+      - --certificatesresolvers.le.acme.email=${ACME_MAIL}
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
       - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -48,7 +48,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==manager]
+        constraints: [node.role == manager]
     volumes:
       # performance result writing 100000 rows:
       # on lokal disk on master: 1.9-2.1s (random numbers), 1.6s (static strings)
@@ -59,8 +59,8 @@ services:
       # on gluster mount on master: 2.2-2.5s, 1.7-2.7s
       # on gluster mount on node: 2.2-2.8s, 3.4-4.6s
       # on dedicated root with raid0 SATA: [not tested], 1.37s (myisam) / 1.4-1.8s (innodb)
-      - ${STORAGE_DIR}/mariadb:/bitnami/mariadb # decided for storage mount so the master can easily be recreated without importing data
-      - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
+      - $SHARED_VOLUME_LOCAL/mariadb:/bitnami/mariadb # decided for storage mount so the master can easily be recreated without importing data
+      - $SHARED_VOLUME/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=master
       - MARIADB_REPLICATION_USER=repl_user
@@ -84,13 +84,13 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.hostname == ${ASSISTANT_HOST}]
     volumes:
       # the replicated databases don't need to be stored on the
       # network filesystem. This will cause the slave to read the
       # whole binlog again when the swarm switches it to another node.
-      - /opt/container-data/dbslave:/bitnami/mariadb
-      - ${CONTAINER_DATA}/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
+      - $ASSISTANT_VOLUME/dbslave:/bitnami/mariadb
+      - $SHARED_VOLUME/mariadb/config/my_custom.cnf:/opt/bitnami/mariadb/conf/my_custom.cnf:ro
     environment:
       - MARIADB_REPLICATION_MODE=slave
       - MARIADB_REPLICATION_USER=repl_user
@@ -111,7 +111,7 @@ services:
     deploy:
       replicas: 2
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.role == worker, node.hostname != ${ASSISTANT_HOST}]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -129,7 +129,7 @@ services:
     volumes:
 #      - /var/www/html/index.html:/usr/share/nginx/html/index.html
       - /var/www/html:/var/www/html
-      - ${CONTAINER_DATA}/nginx/site.conf:/etc/nginx/conf.d/site.conf
+      - $SHARED_VOLUME/nginx/site.conf:/etc/nginx/conf.d/site.conf
     networks:
       - traefik-net
 
@@ -138,7 +138,7 @@ services:
     deploy:
       replicas: 2
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.role==worker, node.hostname != ${ASSISTANT_HOST}]
     volumes:
       - /var/www/html:/var/www/html
     networks:
@@ -149,7 +149,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.hostname == ${ASSISTANT_HOST}]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -165,7 +165,7 @@ services:
         - traefik.http.routers.adminer-https.service=adminer-service
         - traefik.http.services.adminer-service.loadbalancer.server.port=8080
         - traefik.http.routers.adminer-https.middlewares=adminer-auth
-        - traefik.http.middlewares.adminer-auth.basicauth.users=${BASIC_CREDENTIALS}
+        - traefik.http.middlewares.adminer-auth.basicauth.users=${ADMIN_CREDENTIALS}
     environment:
       - ADMINER_DEFAULT_SERVER=dbmaster
     networks:
@@ -176,12 +176,12 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.hostname == ${ASSISTANT_HOST}]
     volumes:
-      - $CONTAINER_DATA/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-      - $CONTAINER_DATA/logging/elastic:/usr/share/elasticsearch/data
+      - $SHARED_VOLUME/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - $ASSISTANT_VOLUME/elastic:/usr/share/elasticsearch/data
     environment:
-      - ELASTIC_PASSWORD=testweise
+      - ELASTIC_PASSWORD
       - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
       # Use single node discovery in order to disable production mode and avoid bootstrap checks
       # see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
@@ -195,15 +195,16 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==worker]
+        constraints: [node.hostname == ${ASSISTANT_HOST}]
     ports:
+      # @todo können die ports weg?
       - "5000:5000/tcp"
       - "5000:5000/udp"
       - "5001:5001/udp"
       - "9600:9600"
     volumes:
-      - $CONTAINER_DATA/logging/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-      - $CONTAINER_DATA/logging/config/pipeline:/usr/share/logstash/pipeline:ro
+      - $SHARED_VOLUME/logging/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - $SHARED_VOLUME/logging/config/pipeline:/usr/share/logstash/pipeline:ro
     environment:
       - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
       - bootstrap.memory_lock=true
@@ -216,7 +217,8 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.role==worker]
+        # @todo debug, use prefix + special node
+        constraints: [node.hostname == ${ASSISTANT_HOST}]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -232,11 +234,11 @@ services:
         - traefik.http.routers.kibana-https.service=kibana-service
         - traefik.http.services.kibana-service.loadbalancer.server.port=5601
 #        - traefik.http.routers.kibana-https.middlewares=kibana-auth
-#        - traefik.http.middlewares.kibana-auth.basicauth.users=${BASIC_CREDENTIALS}
+#        - traefik.http.middlewares.kibana-auth.basicauth.users=${ADMIN_CREDENTIALS}
     environment:
       - TZ
     volumes:
-      - $CONTAINER_DATA/logging/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - $SHARED_VOLUME/logging/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
       - traefik-net
 

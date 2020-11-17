@@ -35,33 +35,36 @@ resource "hcloud_server" "master" {
   user_data   = templatefile("${path.module}/user-data/master.tpl", {
     acme_mail           = var.acme_mail
     admin_password      = var.admin_password
+    cluster_name_prefix = var.cluster_name_prefix
     docker_hub_user     = var.docker_hub_user
     docker_hub_token    = var.docker_hub_token
-    gluster_volume      = var.volume_name
     ip_range            = var.ip_range
     msmtp_host          = var.msmtp_host
     msmtp_user          = var.msmtp_user
     msmtp_password      = var.msmtp_password
     mysql_root_password = var.mysql_root_password
+    node_count          = var.node_count
     node_type           = var.master_type
     public_ip           = hcloud_floating_ip.public_ip.ip_address
+    setup_script_path   = var.setup_script_path
+    shared_volume_id    = hcloud_volume.shared_volume.id
+    shared_volume_name  = var.shared_volume_name
     ssh_public_key      = hcloud_ssh_key.root.public_key
-    volume_id           = hcloud_volume.storage.id
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ]
 }
 
-resource "hcloud_volume" "storage" {
-  name     = var.volume_name
+resource "hcloud_volume" "shared_volume" {
+  name     = var.shared_volume_name
   location = var.location
-  size     = var.volume_size
+  size     = var.shared_volume_size
   format   = "xfs"
 }
 
-resource "hcloud_volume_attachment" "storage_attachment" {
-  volume_id = hcloud_volume.storage.id
-  server_id  = hcloud_server.master.id
-  automount  = false
+resource "hcloud_volume_attachment" "shared_volume_attachment" {
+  volume_id = hcloud_volume.shared_volume.id
+  server_id = hcloud_server.master.id
+  automount = false
 }
 
 resource "hcloud_server_network" "master_network" {
@@ -74,23 +77,68 @@ resource "hcloud_floating_ip_assignment" "master_floating_ip" {
   server_id      = hcloud_server.master.id
 }
 
+# Assistant Setup
+resource "hcloud_server" "assistant" {
+  name        = "${var.cluster_name_prefix}assistant"
+  image       = var.os_image
+  server_type = var.node_type
+  location    = var.location
+  user_data   = templatefile("${path.module}/user-data/assistant.tpl", {
+    assistant_volume_id   = hcloud_volume.assistant_volume.id
+    assistant_volume_name = var.assistant_volume_name
+    cluster_name_prefix   = var.cluster_name_prefix
+    elastic_password      = var.elastic_password
+    gluster_volume        = var.volume_name
+    ip_range              = var.ip_range
+    master_ip             = hcloud_server_network.master_network.ip
+    msmtp_host            = var.msmtp_host
+    msmtp_user            = var.msmtp_user
+    msmtp_password        = var.msmtp_password
+    node_type             = var.node_type
+    setup_script_path     = var.setup_script_path
+    shared_volume_name    = var.shared_volume_name
+    ssh_public_key        = hcloud_ssh_key.root.public_key
+    volume_id             = hcloud_volume.secondary_volume.id
+  })
+  ssh_keys    = [ hcloud_ssh_key.root.id ] 
+}
+
+resource "hcloud_volume" "assistant_volume" {
+  name     = var.secondary_volume_name
+  location = var.location
+  size     = var.secondary_volume_size
+  format   = "xfs"
+}
+
+resource "hcloud_volume_attachment" "assistant_volume_attachment" {
+  volume_id = hcloud_volume.assistant_volume.id
+  server_id = hcloud_server.assistant.id
+  automount = false
+}
+
+resource "hcloud_server_network" "assistant_network" {
+  server_id = hcloud_server.assistant.id
+  subnet_id = hcloud_network_subnet.subnet.id
+}
+
 # Worker Setup
 resource "hcloud_server" "node" {
   count       = var.node_count
-  name        = "${var.name_prefix}node-${count.index + 1}"
+  name        = "${var.cluster_name_prefix}node-${count.index + 1}"
   image       = var.os_image
   server_type = var.node_type
   location    = var.location
   user_data   = templatefile("${path.module}/user-data/node.tpl", {
-    gluster_volume = var.volume_name
-    ip_range       = var.ip_range,
-    master_ip      = hcloud_server_network.master_network.ip
-    master_name    = "${var.name_prefix}master"
-    msmtp_host     = var.msmtp_host
-    msmtp_user     = var.msmtp_user
-    msmtp_password = var.msmtp_password
-    node_type      = var.node_type
-    ssh_public_key = hcloud_ssh_key.root.public_key,
+    cluster_name_prefix = var.cluster_name_prefix
+    ip_range            = var.ip_range
+    master_ip           = hcloud_server_network.master_network.ip
+    msmtp_host          = var.msmtp_host
+    msmtp_user          = var.msmtp_user
+    msmtp_password      = var.msmtp_password
+    node_type           = var.node_type
+    setup_script_path   = var.setup_script_path
+    shared_volume_name  = var.shared_volume_name
+    ssh_public_key      = hcloud_ssh_key.root.public_key
   })
   ssh_keys    = [ hcloud_ssh_key.root.id ] 
 }

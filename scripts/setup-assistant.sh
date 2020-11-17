@@ -15,6 +15,14 @@ setupRunOnce
 # node specific
 setupSwarmNodeUfw
 setupGlusterClient
+setupAssistantVolume
+
+# assistant specific, he runs the replication slave and the ELK stack
+prepareDbSlaveStorage
+prepareLogging
 
 # requires all previous
 setupSwarmNode
+
+# additional bootstrapping
+setupSwarmAssistant
