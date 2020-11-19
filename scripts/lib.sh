@@ -81,7 +81,10 @@ retry_while() {
     return $return_value
 }
 
-# setup infrastructure for tasks that are run once after the next reboot
+######################
+# Setup infrastructure for tasks that are run once after the next reboot,
+# executed on all cluster servers.
+######################
 setupRunOnce() {
     mkdir -p /etc/local/runonce.d/ran
     cp $SETUP_SCRIPT_PATH/templates/usr/local/sbin/runonce.sh /usr/local/sbin/
@@ -89,10 +92,17 @@ setupRunOnce() {
     echo "@reboot root /usr/local/sbin/runonce.sh 2>&1 >> /var/log/runonce.log" >> /etc/cron.d/runonce
 }
 
+######################
+# Executed on all cluster servers for general docker config / optimization
+######################
 prepareDockerConfig() {
     cp $SETUP_SCRIPT_PATH/templates/etc/sysctl.d/80-docker.conf /etc/sysctl.d/
 }
 
+######################
+# Executed before deploying the stack, creates the config file used by the 
+# DB server on the swarm master and the replication slave on the swarm assistant.
+######################
 prepareMariadbConfig() {
     local sharedMountPoint=$(getSharedVolumeMount)
 
@@ -100,6 +110,9 @@ prepareMariadbConfig() {
     cp $SETUP_SCRIPT_PATH/templates/config/mariadb/my_custom.cnf $sharedMountPoint/mariadb/config/
 }
 
+######################
+# Executed before deploying the stack, creates the data folder for the DB master.
+######################
 prepareMariadbStorage() {
     local localMountPoint=$(getSharedVolumeLocalMount)
     mkdir -p $localMountPoint/mariadb
@@ -108,6 +121,9 @@ prepareMariadbStorage() {
     chown -R 1001:1001 $localMountPoint/mariadb
 }
 
+######################
+# Executed before joining the swarm, creates the data folder for the replication slave.
+######################
 prepareDbSlaveStorage() {
     echo "preparing folders for the replication slave..."
     local mountPoint=$(getAssistantVolumeMount)
@@ -118,6 +134,15 @@ prepareDbSlaveStorage() {
     chown -R 1001:1001 $mountPoint/dbslave
 }
 
+######################
+# Creates folders used for the ELK stack on the swarm assistant. Generates
+# passwords for the elasticsearch uses and updates the credentials in the
+# config files for the containers. This is executed before joining the swarm
+# so all mount points are available and the config is up-to-date so no container
+# restart is required.
+# The generated passwords are stored on disk so they can be set after the first
+# reboot and when the elastic container is up.
+######################
 prepareLogging() {
     local assistantMountPoint=$(getAssistantVolumeMount)
     mkdir -p $assistantMountPoint/logging/{config,elastic}
@@ -149,19 +174,30 @@ prepareLogging() {
         "$assistantMountPoint/logging/config/logstash.yml"
 }
 
+######################
+# Enables the UFW with basic rules, denies root login and prepares some config/scripts.
+######################
 prepareBasicSecurity() {
     sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
     cp $SETUP_SCRIPT_PATH/templates/usr/local/sbin/fail2ban-status.sh /usr/local/sbin/fail2ban-status.sh
     cp $SETUP_SCRIPT_PATH/templates/etc/ufw/applications.d/* /etc/ufw/applications.d/
-    
+
+    # UFW's defaults are to deny all incoming connections and allow all outgoing connections.
     ufw allow OpenSSH
-    
+
     # protocol ESP is required for Docker swarm on master & nodes 
     ufw allow proto esp from $LOCAL_IP_RANGE to any
 
     ufw --force enable
 }
 
+######################
+# Replaces the auto-assigned IP with the given floating IP, which can be protected
+# so it does not change with a "terraform apply"
+#
+# params:
+# $1 - floating/public IP to use for the current machine
+######################
 setPublicIp() {
     echo "Setting the IP $1 as default..."
     cp $SETUP_SCRIPT_PATH/templates/etc/netplan/60-floating-ip.yaml /etc/netplan/
@@ -170,7 +206,9 @@ setPublicIp() {
     # it causes loss of the ens10/enp7s0 interface... 
 }
 
-# to send emails from cron jobs etc to external mail address
+######################
+# Initialize MSMTP config to send emails from cron jobs etc to external mail address.
+######################
 setupMsmtp() {
     echo "configuring MSMTP to send status mails to external mailbox..."
     cp $SETUP_SCRIPT_PATH/templates/etc/msmtprc /etc/
@@ -181,26 +219,36 @@ setupMsmtp() {
         "/etc/msmtprc"
 }
 
-# allow ports for swarm management, requires ufw config from prepareBasicSecurity
+######################
+# Allow ports for swarm management, requires ufw config from prepareBasicSecurity.
+######################
 setupSwarmMasterUfw() {
     echo "configuring UFW to allow Docker swarm management..."
 
     ufw allow from $LOCAL_IP_RANGE to any app "Docker Manager"
 }
 
-# allow ports for swarm, requires ufw config from prepareBasicSecurity
+######################
+# Allow ports for swarm, requires ufw config from prepareBasicSecurity.
+######################
 setupSwarmNodeUfw() {
     echo "configuring UFW to allow Docker swarm participation..."
 
     ufw allow from $LOCAL_IP_RANGE to any app "Docker Node"
 }
 
+######################
+# Allow all cluster servers to access our volumes, requires ufw config from
+# prepareBasicSecurity.
+######################
 setupGlusterServerUfw() {
     echo "configuring UFW to allow Gluster management..."
     ufw allow from $LOCAL_IP_RANGE to any app Gluster
 }
 
-# mount the cloud volume now and automatically after reboot
+######################
+# Mounts the cloud volume for the shared data now and automatically after reboot.
+######################
 setupSharedVolume() {
     echo "mounting the attached cloud storage $SHARED_VOLUME_NAME ($SHARED_VOLUME_ID)"
     local mountPoint=$(getSharedVolumeLocalMount)
@@ -210,7 +258,11 @@ setupSharedVolume() {
     mount -o discard,defaults /dev/disk/by-id/scsi-0HC_Volume_$SHARED_VOLUME_ID $mountPoint
 }
 
-# mount the cloud volume now and automatically after reboot
+######################
+# Mounts the attached cloud volume for assistant specific data (elasticsearch
+# for logging, dbslave for backup including binlog) now and for automatic mount
+# after reboot.
+######################
 setupAssistantVolume() {
     echo "mounting the attached cloud storage $ASSISTANT_VOLUME_NAME ($ASSISTANT_VOLUME_ID)"
     local mountPoint=$(getAssistantVolumeMount)
@@ -220,6 +272,10 @@ setupAssistantVolume() {
     mount -o discard,defaults /dev/disk/by-id/scsi-0HC_Volume_$ASSISTANT_VOLUME_ID $mountPoint
 }
 
+######################
+# Initializes the sharing of the attached cloud volume via GlusterFS with
+# the other cluster servers.
+######################
 setupGlusterServer() {
     echo "setting up GlusterFS server..."
 
@@ -258,6 +314,10 @@ setupGlusterServer() {
     echo "localhost:$SHARED_VOLUME_NAME $mountPoint glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=15,backupvolfile-server=localhost 0 0" >> /etc/fstab
 }
 
+######################
+# Executed on the swarm nodes & assistant to access the Gluster volume
+# with the shared container data & config
+######################
 setupGlusterClient() {
     local sharedMountPoint=$(getSharedVolumeMount)
     local masterName=${CLUSTER_NAME_PREFIX}master
@@ -267,7 +327,7 @@ setupGlusterClient() {
     # mounting via "ip:/volume" is not allowed -> use the hostname
     echo "$MASTER_IPV4_ADDRESS $masterName" >> /etc/hosts
 
-    # mount the shared volume now and also automatically after reboot
+    # mount the shared volume now and also automatically when accessed
     echo "$masterName:/$SHARED_VOLUME_NAME $sharedMountPoint glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=45 0 0" >> /etc/fstab
 
     echo -n "waiting till mount of the shared volume succeeds..."
@@ -279,6 +339,12 @@ setupGlusterClient() {
     echo ""
 }
 
+######################
+# Runs only on the swarm master, initializes the all shared folders in the
+# Gluster volume, creates the shared network & the Docker swarm.
+# Updates the .env template with credentials & calculated paths and schedules
+# the deployment of the main stack after the first reboot.
+######################
 setupSwarmMaster() {
     echo "Creating the Docker Swarm..."
 
@@ -338,6 +404,11 @@ setupSwarmMaster() {
     chmod ug+x /etc/local/runonce.d/deploy-main-stack.sh
 }
 
+######################
+# Runs on swarm nodes and the swarm assistant.
+# Simply joins the Docker swarm, depends on the shared Gluster volume to be
+# available.
+######################
 setupSwarmNode() {
     echo "Joining the Docker Swarm..."
     local sharedMountPoint=$(getSharedVolumeMount)
@@ -346,23 +417,36 @@ setupSwarmNode() {
     docker swarm join --token `cat $sharedMountPoint/join-token.txt` $MASTER_IPV4_ADDRESS:2377
 }
 
+######################
+# Runs after setupSwarmNode to trigger additional tasks only for the assistant.
+######################
 setupSwarmAssistant() {
     # this runs right after we joined the swarm, the elastic container will
     # probably not be right up, we also need to reboot -> delay until after
     # reboot & until the container runs
     echo "#!/bin/bash
     . $SETUP_SCRIPT_PATH/scripts/lib.sh
-    setElasticPasswords $ELASTIC_PASSWORD" >> /etc/local/runonce.d/set-elastic-passwords.sh
+    sleep 180 # give the machine some time to start Docker etc
+    initLoggingContainers $ELASTIC_PASSWORD" >> /etc/local/runonce.d/set-elastic-passwords.sh
     chmod ug+x /etc/local/runonce.d/set-elastic-passwords.sh   
 }
 
+######################
+# Executed via runonce after the swarm assistant reboots.
+# Uses the previously configured passwords (@see prepareLogging) to set the
+# passwords inside the elasticsearch container. Also creates the first index
+# pattern in Kibana.
+#
+# params:
 # $1 - elastic bootstrap pw
-setElasticPasswords() {
+######################
+initLoggingContainers() {
     local assistantMountPoint=$(getAssistantVolumeMount)
     local kibanaPW=$(cat $assistantMountPoint/logging/kibana.pw)
     local logstashPW=$(cat $assistantMountPoint/logging/logstash.pw)
 
     waitForContainer "es-logging"
+    sleep 180 # give the container some time to start ES so our curl requests work
     local elasticContainer=$(getContainerIdByName "es-logging")
 
     echo "setting passwords for elastic search users..."
