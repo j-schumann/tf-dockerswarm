@@ -152,9 +152,12 @@ prepareLogging() {
 
     cp -R $SETUP_SCRIPT_PATH/templates/config/logging/* $assistantMountPoint/logging/config/
 
-    # set the password in the config now so we don't need to restart the container    
+    # create a password and set it in the config now so we don't need to restart the container
+    # also store it in plaintext so we can set it in the container after reboot
+    local elasticPW=$(generatePassword)
+    echo $elasticPW > $assistantMountPoint/logging/elastic.pw
     sed -i \
-        -e "s#ELASTIC_PASSWORD#$ELASTIC_PASSWORD#g" \
+        -e "s#ELASTIC_PASSWORD#$elasticPW#g" \
         "$assistantMountPoint/logging/config/pipeline/logstash.conf"
 
     # create a password and set it in the config now so we don't need to restart the container
@@ -217,6 +220,9 @@ setupMsmtp() {
         -e "s#MSMTP_USER#$MSMTP_USER#g" \
         -e "s#MSMTP_PASSWORD#$MSMTP_PASSWORD#g" \
         "/etc/msmtprc"
+
+    systemctl enable msmtpd
+    systemctl start msmtpd
 }
 
 ######################
@@ -442,6 +448,7 @@ setupSwarmAssistant() {
 ######################
 initLoggingContainers() {
     local assistantMountPoint=$(getAssistantVolumeMount)
+    local elasticPW=$(cat $assistantMountPoint/logging/elastic.pw)
     local kibanaPW=$(cat $assistantMountPoint/logging/kibana.pw)
     local logstashPW=$(cat $assistantMountPoint/logging/logstash.pw)
 
@@ -450,15 +457,16 @@ initLoggingContainers() {
     local elasticContainer=$(getContainerIdByName "es-logging")
 
     echo "setting passwords for elastic search users..."
-    echo "using elastic:$1, kibana:$kibanaPW and logstash_system:$logstashPW"
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPW\" }" --user "elastic:$1"
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPW\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$elasticPW\" }" --user "elastic:$1"
 
-    # @todo we set the elastic pw to the same as our previous bootstrap pw,
-    # it remains in the /etc/local/runonce.d/ran/-script afterwards
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$1\" }" --user "elastic:$1"
+    printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | sendmail root
 
-    rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
+    # remove the PW files, the PWs are still readable in the config files
+    # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
+    # it was only used for bootstrapping
+    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 
     waitForContainer "kibana"
     sleep 180 # give the container some time to start Kibana so our curl request works
