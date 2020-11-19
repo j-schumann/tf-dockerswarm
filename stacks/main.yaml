@@ -22,7 +22,6 @@ services:
     volumes:
       # Add Docker as a mounted volume, so that Traefik can read the labels of other services
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Mount the volume to store the certificates
       - $SHARED_VOLUME/traefik:/certificates
     command:
       - --providers.docker
@@ -30,7 +29,7 @@ services:
       - --providers.docker.swarmmode
       - --entrypoints.http.address=:80
       - --entrypoints.https.address=:443
-      - --certificatesresolvers.le.acme.email=${ACME_MAIL}
+      - --certificatesresolvers.le.acme.email=$ACME_MAIL
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
       - --certificatesresolvers.le.acme.tlschallenge=true
       - "--certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
@@ -86,7 +85,7 @@ services:
       placement:
         constraints: [node.hostname == $ASSISTANT_HOST]
     volumes:
-      # the replicated databases don't need to be stored on the
+      # the replicated databases doesn't need to be stored on the
       # network filesystem. This will cause the slave to read the
       # whole binlog again when the swarm switches it to another node.
       - $ASSISTANT_VOLUME/dbslave:/bitnami/mariadb
@@ -97,7 +96,7 @@ services:
       - MARIADB_REPLICATION_PASSWORD=repl_pw
       - MARIADB_MASTER_HOST=dbmaster
       # used to access the master, also set as local root pw
-      - MARIADB_MASTER_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_MASTER_ROOT_PASSWORD=$MARIADB_ROOT_PASSWORD
     networks:
       - traefik-net
     healthcheck:
@@ -115,11 +114,13 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
+        # @todo customize
         - traefik.http.routers.website-http.rule=Host(`test.vrok.de`)
         - traefik.http.routers.website-http.entrypoints=http
         - traefik.http.routers.website-http.middlewares=website-redirect
         - traefik.http.middlewares.website-redirect.redirectscheme.scheme=https
         - traefik.http.middlewares.website-redirect.redirectscheme.permanent=true
+        # @todo customize
         - traefik.http.routers.website-https.rule=Host(`test.vrok.de`)
         - traefik.http.routers.website-https.entrypoints=https
         - traefik.http.routers.website-https.tls=true
@@ -128,7 +129,7 @@ services:
         - traefik.http.services.website-service.loadbalancer.server.port=80
     volumes:
 #      - /var/www/html/index.html:/usr/share/nginx/html/index.html
-      - /var/www/html:/var/www/html
+#      - /var/www/html:/var/www/html
       - $SHARED_VOLUME/nginx/site.conf:/etc/nginx/conf.d/site.conf
     networks:
       - traefik-net
@@ -139,8 +140,8 @@ services:
       replicas: 2
       placement:
         constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
-    volumes:
-      - /var/www/html:/var/www/html
+#    volumes:
+#      - /var/www/html:/var/www/html
     networks:
       - traefik-net
 
@@ -153,11 +154,13 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
+        # @todo customize
         - traefik.http.routers.adminer-http.rule=Host(`adminer.test.vrok.de`)
         - traefik.http.routers.adminer-http.entrypoints=http
         - traefik.http.routers.adminer-http.middlewares=adminer-redirect
         - traefik.http.middlewares.adminer-redirect.redirectscheme.scheme=https
         - traefik.http.middlewares.adminer-redirect.redirectscheme.permanent=true
+        # @todo customize
         - traefik.http.routers.adminer-https.rule=Host(`adminer.test.vrok.de`)
         - traefik.http.routers.adminer-https.entrypoints=https
         - traefik.http.routers.adminer-https.tls=true
@@ -165,7 +168,7 @@ services:
         - traefik.http.routers.adminer-https.service=adminer-service
         - traefik.http.services.adminer-service.loadbalancer.server.port=8080
         - traefik.http.routers.adminer-https.middlewares=adminer-auth
-        - traefik.http.middlewares.adminer-auth.basicauth.users=${ADMIN_CREDENTIALS}
+        - traefik.http.middlewares.adminer-auth.basicauth.users=$ADMIN_CREDENTIALS
     environment:
       - ADMINER_DEFAULT_SERVER=dbmaster
     networks:
@@ -221,11 +224,13 @@ services:
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
+        # @todo customize
         - traefik.http.routers.kibana-http.rule=Host(`kibana.test.vrok.de`)
         - traefik.http.routers.kibana-http.entrypoints=http
         - traefik.http.routers.kibana-http.middlewares=kibana-redirect
         - traefik.http.middlewares.kibana-redirect.redirectscheme.scheme=https
         - traefik.http.middlewares.kibana-redirect.redirectscheme.permanent=true
+        # @todo customize
         - traefik.http.routers.kibana-https.rule=Host(`kibana.test.vrok.de`)
         - traefik.http.routers.kibana-https.entrypoints=https
         - traefik.http.routers.kibana-https.tls=true
@@ -233,7 +238,7 @@ services:
         - traefik.http.routers.kibana-https.service=kibana-service
         - traefik.http.services.kibana-service.loadbalancer.server.port=5601
 #        - traefik.http.routers.kibana-https.middlewares=kibana-auth
-#        - traefik.http.middlewares.kibana-auth.basicauth.users=${ADMIN_CREDENTIALS}
+#        - traefik.http.middlewares.kibana-auth.basicauth.users=$ADMIN_CREDENTIALS
     environment:
       - TZ
     volumes:

@@ -361,10 +361,10 @@ setupSwarmAssistant() {
 
 # $1 - elastic bootstrap pw
 setElasticPasswords() {
-    local sharedMountPoint=$(getSharedVolumeMount)
-    local kibanaPW=$(cat $sharedMountPoint/logging/kibana.pw)
-    local logstashPW=$(cat $sharedMountPoint/logging/logstash.pw)
-    
+    local assistantMountPoint=$(getAssistantVolumeMount)
+    local kibanaPW=$(cat $assistantMountPoint/logging/kibana.pw)
+    local logstashPW=$(cat $assistantMountPoint/logging/logstash.pw)
+
     waitForContainer "es-logging"
     local elasticContainer=$(getContainerIdByName "es-logging")
 
@@ -373,10 +373,10 @@ setElasticPasswords() {
     docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPw\" }" --user "elastic:$1"
     docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPw\" }" --user "elastic:$1"
     docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$ELASTIC_PASSWORD\" }" --user "elastic:$1"
-    
-    rm $sharedMountPoint/logging/kibana.pw $sharedMountPoint/logging/logstash.pw
-    
+
+    rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
+
     waitForContainer "kibana"
     local kibanaContainer=$(getContainerIdByName "kibana")
-    docker exec -it kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.10.0' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
+    docker exec -it $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.10.0' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
 }
