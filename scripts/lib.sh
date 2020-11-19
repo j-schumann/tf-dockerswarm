@@ -385,7 +385,7 @@ setupSwarmMaster() {
     # prepare the .env file, some ENV variables are only set now in the cloud-init boot
     sed -i \
         -e "s#=ACME_MAIL#=$ACME_MAIL#g" \
-        -e "s#=ADMIN_CREDENTIALS#=$ADMIN_CREDENTIALS#g" \
+        -e "s#=ADMIN_CREDENTIALS#=$adminCredentials#g" \
         -e "s#=ASSISTANT_VOLUME#=$assistantMountPoint#g" \
         -e "s#CLUSTER_NAME_PREFIX#$CLUSTER_NAME_PREFIX#g" \
         -e "s#=ELASTIC_PASSWORD#=$ELASTIC_PASSWORD#g" \
@@ -453,14 +453,17 @@ initLoggingContainers() {
     echo "using elastic:$1, kibana:$kibanaPW and logstash_system:$logstashPW"
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPW\" }" --user "elastic:$1"
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPW\" }" --user "elastic:$1"
+
+    # @todo we set the elastic pw to the same as our previous bootstrap pw,
+    # it remains in the /etc/local/runonce.d/ran/-script afterwards
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$1\" }" --user "elastic:$1"
 
     rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
 
     waitForContainer "kibana"
-    sleep 180 # give the container some time to start Kibana so our curl requests work
+    sleep 180 # give the container some time to start Kibana so our curl request works
     local kibanaContainer=$(getContainerIdByName "kibana")
-    
+
     # @todo kbn-version header is required and must match the Kibana version
     docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.7.1' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
 }
