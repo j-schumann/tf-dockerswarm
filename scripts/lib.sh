@@ -347,9 +347,6 @@ setupSwarmNode() {
 }
 
 setupSwarmAssistant() {
-    prepareDbSlaveStorage
-    prepareLogging
-
     # this runs right after we joined the swarm, the elastic container will
     # probably not be right up, we also need to reboot -> delay until after
     # reboot & until the container runs
