@@ -14,7 +14,7 @@ getLocalInterface() {
 }
 
 getLocalIp() {
-    local iface="$(getLocalInterface)"
+    local iface=$(getLocalInterface)
     ip -o -4 addr show dev $iface | cut -d' ' -f7 | cut -d'/' -f1
 }
 
@@ -94,14 +94,14 @@ prepareDockerConfig() {
 }
 
 prepareMariadbConfig() {
-    local sharedMountPoint="$(getSharedVolumeMount)"
+    local sharedMountPoint=$(getSharedVolumeMount)
 
     mkdir -p $sharedMountPoint/mariadb/config
     cp $SETUP_SCRIPT_PATH/templates/config/mariadb/my_custom.cnf $sharedMountPoint/mariadb/config/
 }
 
 prepareMariadbStorage() {
-    local localMountPoint="$(getSharedVolumeLocalMount)"
+    local localMountPoint=$(getSharedVolumeLocalMount)
     mkdir -p $localMountPoint/mariadb
 
     # required for mariadb to start
@@ -110,7 +110,7 @@ prepareMariadbStorage() {
 
 prepareDbSlaveStorage() {
     echo "preparing folders for the replication slave..."
-    local mountPoint="$(getAssistantVolumeMount)"
+    local mountPoint=$(getAssistantVolumeMount)
     
     mkdir -p $mountPoint/dbslave
 
@@ -119,7 +119,7 @@ prepareDbSlaveStorage() {
 }
 
 prepareLogging() {
-    local assistantMountPoint="$(getAssistantVolumeMount)"
+    local assistantMountPoint=$(getAssistantVolumeMount)
     mkdir -p $assistantMountPoint/logging/{config,elastic}
 
     # required for elasticsearch to start
@@ -203,7 +203,7 @@ setupGlusterServerUfw() {
 # mount the cloud volume now and automatically after reboot
 setupSharedVolume() {
     echo "mounting the attached cloud storage $SHARED_VOLUME_NAME ($SHARED_VOLUME_ID)"
-    local mountPoint="$(getSharedVolumeLocalMount)"
+    local mountPoint=$(getSharedVolumeLocalMount)
     mkdir -p $mountPoint
 
     echo "/dev/disk/by-id/scsi-0HC_Volume_$SHARED_VOLUME_ID $mountPoint xfs discard,nofail,defaults 0 0" >> /etc/fstab
@@ -213,7 +213,7 @@ setupSharedVolume() {
 # mount the cloud volume now and automatically after reboot
 setupAssistantVolume() {
     echo "mounting the attached cloud storage $ASSISTANT_VOLUME_NAME ($ASSISTANT_VOLUME_ID)"
-    local mountPoint="$(getAssistantVolumeMount)"
+    local mountPoint=$(getAssistantVolumeMount)
     mkdir -p $mountPoint
 
     echo "/dev/disk/by-id/scsi-0HC_Volume_$ASSISTANT_VOLUME_ID $mountPoint xfs discard,nofail,defaults 0 0" >> /etc/fstab
@@ -223,8 +223,8 @@ setupAssistantVolume() {
 setupGlusterServer() {
     echo "setting up GlusterFS server..."
 
-    local brickPath="$(getSharedVolumeLocalMount)/bricks/1"
-    local mountPoint="$(getSharedVolumeMount)"
+    local brickPath=$(getSharedVolumeLocalMount)/bricks/1
+    local mountPoint=$(getSharedVolumeMount)
 
     # activate the gluster server using the cloud volume
     systemctl enable glusterd.service
@@ -259,12 +259,12 @@ setupGlusterServer() {
 }
 
 setupGlusterClient() {
-    local sharedMountPoint="$(getSharedVolumeMount)"
+    local sharedMountPoint=$(getSharedVolumeMount)
 
     mkdir -p $sharedMountPoint
 
     # mounting via "ip:/volume" is not allowed -> use the hostname
-    echo "$MASTER_IPV4_ADDRESS $(CLUSTER_NAME_PREFIX)master" >> /etc/hosts
+    echo "$MASTER_IPV4_ADDRESS ${CLUSTER_NAME_PREFIX}master" >> /etc/hosts
 
     # mount the shared volume now and also automatically after reboot
     echo "$MASTER_NAME:/$SHARED_VOLUME_NAME $sharedMountPoint glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=45 0 0" >> /etc/fstab
@@ -282,9 +282,9 @@ setupSwarmMaster() {
     echo "Creating the Docker Swarm..."
 
     local env_file="$SETUP_SCRIPT_PATH/stacks/.env"
-    local localMountPoint="$(getSharedVolumeLocalMount)"
-    local sharedMountPoint="$(getSharedVolumeMount)"
-    local assistantMountPoint="$(getAssistantVolumeMount)"
+    local localMountPoint=$(getSharedVolumeLocalMount)
+    local sharedMountPoint=$(getSharedVolumeMount)
+    local assistantMountPoint=$(getAssistantVolumeMount)
 
     # default directories for the container data
     mkdir -p $sharedMountPoint/{traefik,nginx}
@@ -339,7 +339,7 @@ setupSwarmMaster() {
 
 setupSwarmNode() {
     echo "Joining the Docker Swarm..."
-    local sharedMountPoint="$(getSharedVolumeMount)"
+    local sharedMountPoint=$(getSharedVolumeMount)
 
     waitForFile $sharedMountPoint/join-token.txt
     docker swarm join --token `cat $sharedMountPoint/join-token.txt` $MASTER_IPV4_ADDRESS:2377
@@ -360,9 +360,9 @@ setupSwarmAssistant() {
 
 # $1 - elastic bootstrap pw
 setElasticPasswords() {
-    local sharedMountPoint="$(getSharedVolumeMount)"
-    local kibanaPW="$(cat $sharedMountPoint/logging/kibana.pw)"
-    local logstashPW="$(cat $sharedMountPoint/logging/logstash.pw)"
+    local sharedMountPoint=$(getSharedVolumeMount)
+    local kibanaPW=$(cat $sharedMountPoint/logging/kibana.pw)
+    local logstashPW=$(cat $sharedMountPoint/logging/logstash.pw)
     
     waitForContainer "es-logging"
     local elasticContainer=$(getContainerIdByName "es-logging")
