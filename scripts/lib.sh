@@ -326,7 +326,7 @@ setupSwarmMaster() {
         -e "s#=MYSQL_ROOT_PASSWORD#=$MYSQL_ROOT_PASSWORD#g" \
         -e "s#=PUBLIC_IP#=$PUBLIC_IP#g" \
         -e "s#=SHARED_VOLUME#=$sharedMountPoint#g" \
-        -e "s#=SHARED_VOLUME_LOCAL#=$localMountPoint#g" \
+        -e "s#=VOLUME_LOCAL#=$localMountPoint#g" \
         "$env_file"
 
     # we don't want to deploy the stack right now but only after the reboot
@@ -367,13 +367,13 @@ setElasticPasswords() {
 
     echo "setting passwords for elastic search users..."
     echo "using elastic:$1, kibana:$kibanaPW and logstash_system:$logstashPW"
-    docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPw\" }" --user "elastic:$1"
-    docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPw\" }" --user "elastic:$1"
-    docker exec -it $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$ELASTIC_PASSWORD\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPw\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPw\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$ELASTIC_PASSWORD\" }" --user "elastic:$1"
 
     rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
 
     waitForContainer "kibana"
     local kibanaContainer=$(getContainerIdByName "kibana")
-    docker exec -it $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.10.0' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
+    docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.10.0' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
 }
