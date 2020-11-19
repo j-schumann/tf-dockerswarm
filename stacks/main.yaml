@@ -84,8 +84,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints:
-          - node.hostname==$ASSISTANT_HOST
+        constraints: [node.hostname == $ASSISTANT_HOST]
     volumes:
       # the replicated databases don't need to be stored on the
       # network filesystem. This will cause the slave to read the
@@ -112,7 +111,7 @@ services:
     deploy:
       replicas: 2
       placement:
-        constraints: [node.role==worker, node.hostname!=${ASSISTANT_HOST}]
+        constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -139,7 +138,7 @@ services:
     deploy:
       replicas: 2
       placement:
-        constraints: [node.role==worker, node.hostname != ${ASSISTANT_HOST}]
+        constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
     volumes:
       - /var/www/html:/var/www/html
     networks:
@@ -150,8 +149,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints:
-          - "node.hostname == ${ASSISTANT_HOST}"
+        constraints: [node.hostname == $ASSISTANT_HOST]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -178,8 +176,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints:
-          - node.hostname==${ASSISTANT_HOST}
+        constraints: [node.hostname == $ASSISTANT_HOST]
     volumes:
       - $ASSISTANT_VOLUME/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
       - $ASSISTANT_VOLUME/logging/elastic:/usr/share/elasticsearch/data
@@ -198,8 +195,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints:
-          - "node.hostname==${ASSISTANT_HOST}"
+        constraints: [node.hostname == $ASSISTANT_HOST]
     ports:
       # @todo können die ports weg?
       - "5000:5000/tcp"
@@ -221,8 +217,7 @@ services:
     deploy:
       replicas: 1
       placement:
-        # @todo debug, use prefix + special node
-        constraints: [node.hostname==${ASSISTANT_HOST}]
+        constraints: [node.hostname == $ASSISTANT_HOST]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net

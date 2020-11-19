@@ -260,17 +260,18 @@ setupGlusterServer() {
 
 setupGlusterClient() {
     local sharedMountPoint=$(getSharedVolumeMount)
+    local masterName=${CLUSTER_NAME_PREFIX}master
 
     mkdir -p $sharedMountPoint
 
     # mounting via "ip:/volume" is not allowed -> use the hostname
-    echo "$MASTER_IPV4_ADDRESS ${CLUSTER_NAME_PREFIX}master" >> /etc/hosts
+    echo "$MASTER_IPV4_ADDRESS $masterName" >> /etc/hosts
 
     # mount the shared volume now and also automatically after reboot
-    echo "$MASTER_NAME:/$SHARED_VOLUME_NAME $sharedMountPoint glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=45 0 0" >> /etc/fstab
+    echo "$masterName:/$SHARED_VOLUME_NAME $sharedMountPoint glusterfs defaults,_netdev,noauto,x-systemd.automount,x-systemd.mount-timeout=45 0 0" >> /etc/fstab
 
     echo -n "waiting till mount of the shared volume succeeds..."
-    until mount.glusterfs $MASTER_NAME:/$SHARED_VOLUME_NAME $sharedMountPoint 2> /dev/null
+    until mount.glusterfs $masterName:/$SHARED_VOLUME_NAME $sharedMountPoint 2> /dev/null
     do
         sleep 5
         echo -n "."
