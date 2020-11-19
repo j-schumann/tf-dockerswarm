@@ -458,6 +458,7 @@ initLoggingContainers() {
     rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
 
     waitForContainer "kibana"
+    sleep 180 # give the container some time to start Kibana so our curl requests work
     local kibanaContainer=$(getContainerIdByName "kibana")
     docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.10.0' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
 }

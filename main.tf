@@ -39,6 +39,7 @@ resource "hcloud_server" "master" {
     cluster_name_prefix   = var.cluster_name_prefix
     docker_hub_user       = var.docker_hub_user
     docker_hub_token      = var.docker_hub_token
+    elastic_password      = var.elastic_password
     ip_range              = var.ip_range
     msmtp_host            = var.msmtp_host
     msmtp_user            = var.msmtp_user

@@ -70,6 +70,7 @@ runcmd:
  - export ADMIN_PASSWORD=${admin_password}
  - export DOCKER_HUB_USER=${docker_hub_user}
  - export DOCKER_HUB_TOKEN=${docker_hub_token}
+ - export ELASTIC_PASSWORD=${elastic_password}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
  - export MSMTP_PASSWORD=${msmtp_password}
