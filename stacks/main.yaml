@@ -112,7 +112,7 @@ services:
     deploy:
       replicas: 2
       placement:
-        constraints: [node.role == worker, node.hostname != ${ASSISTANT_HOST}]
+        constraints: [node.role==worker, node.hostname!=${ASSISTANT_HOST}]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
