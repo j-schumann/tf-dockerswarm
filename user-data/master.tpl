@@ -56,6 +56,7 @@ users:
 runcmd:
  # set persistent env vars
  - echo 'ACME_MAIL="${acme_mail}"' >> /etc/environment
+ - echo 'ASSISTANT_VOLUME_NAME="${assistant_volume_name}"' >> /etc/environment
  - echo 'CLUSTER_NAME_PREFIX="${cluster_name_prefix}"' >> /etc/environment
  - echo 'LOCAL_IP_RANGE="${ip_range}"' >> /etc/environment
  - echo 'NODE_COUNT="${node_count}"' >> /etc/environment

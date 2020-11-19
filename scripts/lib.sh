@@ -119,35 +119,34 @@ prepareDbSlaveStorage() {
 }
 
 prepareLogging() {
-    local sharedMountPoint="$(getSharedVolumeMount)"
     local assistantMountPoint="$(getAssistantVolumeMount)"
-    mkdir -p $sharedMountPoint/logging/config $assistantMountPoint/elastic
-    
+    mkdir -p $assistantMountPoint/logging/{config,elastic}
+
     # required for elasticsearch to start
-    chown -R 1000:1000 $assistantMountPoint/elastic
-    
-    cp -R $SETUP_SCRIPT_PATH/templates/config/logging $sharedMountPoint/logging/config
+    chown -R 1000:1000 $assistantMountPoint/logging/elastic
+
+    cp -R $SETUP_SCRIPT_PATH/templates/config/logging/* $assistantMountPoint/logging/config/
 
     # set the password in the config now so we don't need to restart the container    
     sed -i \
         -e "s#ELASTIC_PASSWORD#$ELASTIC_PASSWORD#g" \
-        "$sharedMountPoint/logging/config/pipeline/logstash.conf"
+        "$assistantMountPoint/logging/config/pipeline/logstash.conf"
 
     # create a password and set it in the config now so we don't need to restart the container
     # also store it in plaintext so we can set it in the container after reboot
     local kibanaPW=$(generatePassword)
-    echo $kibanaPW > $sharedMountPoint/logging/kibana.pw
+    echo $kibanaPW > $assistantMountPoint/logging/kibana.pw
     sed -i \
         -e "s#KIBANA_PASSWORD#$kibanaPW#g" \
-        "$sharedMountPoint/logging/config/kibana.yml"
-            
+        "$assistantMountPoint/logging/config/kibana.yml"
+
     # create a password and set it in the config now so we don't need to restart the container
     # also store it in plaintext so we can set it in the container after reboot
     local logstashPW=$(generatePassword)
-    echo $logstashPW > $sharedMountPoint/logging/logstash.pw
+    echo $logstashPW > $assistantMountPoint/logging/logstash.pw
     sed -i \
         -e "s#LOGSTASH_PASSWORD#$logstashPW#g" \
-        "$sharedMountPoint/logging/config/logstash.yml"
+        "$assistantMountPoint/logging/config/logstash.yml"
 }
 
 prepareBasicSecurity() {
@@ -288,12 +287,11 @@ setupSwarmMaster() {
     local assistantMountPoint="$(getAssistantVolumeMount)"
 
     # default directories for the container data
-    mkdir -p $mountPoint/{traefik,nginx}
+    mkdir -p $sharedMountPoint/{traefik,nginx}
     cp $SETUP_SCRIPT_PATH/templates/config/nginx/site.conf $sharedMountPoint/nginx/
 
     prepareMariadbConfig
     prepareMariadbStorage
-    prepareLogging
     
     # login to hub.docker.com to create the credentials file
     # @todo check if variables are both set, so this is done optionally
@@ -348,6 +346,9 @@ setupSwarmNode() {
 }
 
 setupSwarmAssistant() {
+    prepareDbSlaveStorage
+    prepareLogging
+
     # this runs right after we joined the swarm, the elastic container will
     # probably not be right up, we also need to reboot -> delay until after
     # reboot & until the container runs

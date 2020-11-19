@@ -84,7 +84,8 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == ${ASSISTANT_HOST}]
+        constraints:
+          - node.hostname==$ASSISTANT_HOST
     volumes:
       # the replicated databases don't need to be stored on the
       # network filesystem. This will cause the slave to read the
@@ -149,7 +150,8 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == ${ASSISTANT_HOST}]
+        constraints:
+          - "node.hostname == ${ASSISTANT_HOST}"
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -176,10 +178,11 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == ${ASSISTANT_HOST}]
+        constraints:
+          - node.hostname==${ASSISTANT_HOST}
     volumes:
-      - $SHARED_VOLUME/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-      - $ASSISTANT_VOLUME/elastic:/usr/share/elasticsearch/data
+      - $ASSISTANT_VOLUME/logging/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - $ASSISTANT_VOLUME/logging/elastic:/usr/share/elasticsearch/data
     environment:
       - ELASTIC_PASSWORD
       - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
@@ -195,7 +198,8 @@ services:
     deploy:
       replicas: 1
       placement:
-        constraints: [node.hostname == ${ASSISTANT_HOST}]
+        constraints:
+          - "node.hostname==${ASSISTANT_HOST}"
     ports:
       # @todo können die ports weg?
       - "5000:5000/tcp"
@@ -203,8 +207,8 @@ services:
       - "5001:5001/udp"
       - "9600:9600"
     volumes:
-      - $SHARED_VOLUME/logging/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-      - $SHARED_VOLUME/logging/config/pipeline:/usr/share/logstash/pipeline:ro
+      - $ASSISTANT_VOLUME/logging/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - $ASSISTANT_VOLUME/logging/config/pipeline:/usr/share/logstash/pipeline:ro
     environment:
       - "ES_JAVA_OPTS=-Xmx256m -Xms256m"
       - bootstrap.memory_lock=true
@@ -218,7 +222,7 @@ services:
       replicas: 1
       placement:
         # @todo debug, use prefix + special node
-        constraints: [node.hostname == ${ASSISTANT_HOST}]
+        constraints: [node.hostname==${ASSISTANT_HOST}]
       labels:
         - traefik.enable=true
         - traefik.docker.network=traefik-net
@@ -238,7 +242,7 @@ services:
     environment:
       - TZ
     volumes:
-      - $SHARED_VOLUME/logging/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - $ASSISTANT_VOLUME/logging/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
     networks:
       - traefik-net
 
