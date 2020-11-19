@@ -451,9 +451,9 @@ initLoggingContainers() {
 
     echo "setting passwords for elastic search users..."
     echo "using elastic:$1, kibana:$kibanaPW and logstash_system:$logstashPW"
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPw\" }" --user "elastic:$1"
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPw\" }" --user "elastic:$1"
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$ELASTIC_PASSWORD\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPW\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPW\" }" --user "elastic:$1"
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$1\" }" --user "elastic:$1"
 
     rm $assistantMountPoint/logging/kibana.pw $assistantMountPoint/logging/logstash.pw
 
