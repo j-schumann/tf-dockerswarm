@@ -210,7 +210,7 @@ setPublicIp() {
 }
 
 ######################
-# Initialize MSMTP config to send emails from cron jobs etc to external mail address.
+# Initialize MSMTP to send emails from cron jobs etc to external mail address.
 ######################
 setupMsmtp() {
     echo "configuring MSMTP to send status mails to external mailbox..."
@@ -453,7 +453,7 @@ initLoggingContainers() {
     local logstashPW=$(cat $assistantMountPoint/logging/logstash.pw)
 
     waitForContainer "es-logging"
-    sleep 180 # give the container some time to start ES so our curl requests work
+    sleep 240 # give the container some time to start ES so our curl requests work
     local elasticContainer=$(getContainerIdByName "es-logging")
 
     echo "setting passwords for elastic search users..."
@@ -461,7 +461,7 @@ initLoggingContainers() {
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPW\" }" --user "elastic:$1"
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$elasticPW\" }" --user "elastic:$1"
 
-    printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | sendmail root
+    printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | /usr/sbin/sendmail root
 
     # remove the PW files, the PWs are still readable in the config files
     # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
@@ -469,7 +469,7 @@ initLoggingContainers() {
     rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 
     waitForContainer "kibana"
-    sleep 180 # give the container some time to start Kibana so our curl request works
+    sleep 240 # give the container some time to start Kibana so our curl request works
     local kibanaContainer=$(getContainerIdByName "kibana")
 
     # @todo kbn-version header is required and must match the Kibana version
