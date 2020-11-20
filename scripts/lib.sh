@@ -437,6 +437,34 @@ setupSwarmAssistant() {
     chmod ug+x /etc/local/runonce.d/set-elastic-passwords.sh   
 }
 
+
+######################
+# $1 username
+# $2 new password
+# $3 current elastic pw
+######################
+setElasticPassword() {
+    local elasticContainer=$(getContainerIdByName "es-logging")
+    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" \
+        http://localhost:9200/_security/user/$u/_password \
+        -d "{ \"password\": \"$2\" }" --user "elastic:$3" --fail \
+        >/dev/null && echo "success" || echo "error"
+}
+
+######################
+# $1 current elastic pw
+######################
+initKibana() {
+    local kibanaContainer=$(getContainerIdByName "kibana")
+
+    # @todo kbn-version header is required and must match the Kibana version
+    docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" \ 
+        http://localhost:5601/api/saved_objects/index-pattern \
+        -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' \
+        -H 'kbn-version: 7.7.1' --user "elastic:$1" --fail \
+        >/dev/null && echo "success" || echo "error"
+}
+
 ######################
 # Executed via runonce after the swarm assistant reboots.
 # Uses the previously configured passwords (@see prepareLogging) to set the
@@ -453,13 +481,27 @@ initLoggingContainers() {
     local logstashPW=$(cat $assistantMountPoint/logging/logstash.pw)
 
     waitForContainer "es-logging"
-    sleep 240 # give the container some time to start ES so our curl requests work
-    local elasticContainer=$(getContainerIdByName "es-logging")
 
-    echo "setting passwords for elastic search users..."
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/kibana/_password -d "{ \"password\": \"$kibanaPW\" }" --user "elastic:$1"
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/logstash_system/_password -d "{ \"password\": \"$logstashPW\" }" --user "elastic:$1"
-    docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" http://localhost:9200/_security/user/elastic/_password -d "{ \"password\": \"$elasticPW\" }" --user "elastic:$1"
+    echo -n "setting kibana user pw..."
+    while [ "success" != $(setElasticPassword kibana $kibanaPW $1) ]; do
+        sleep 10
+        echo -n "."
+    done
+    echo ""
+
+    echo -n "setting logstash user pw..."
+    while [ "success" != $(setElasticPassword logstash_system $logstashPW $1) ]; do
+        sleep 10
+        echo -n "."
+    done
+    echo ""
+
+    echo -n "setting elastic user pw..."
+    while [ "success" != $(setElasticPassword elastic $elasticPW $1) ]; do
+        sleep 10
+        echo -n "."
+    done
+    echo ""
 
     printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | /usr/sbin/sendmail root
 
@@ -469,9 +511,11 @@ initLoggingContainers() {
     rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 
     waitForContainer "kibana"
-    sleep 240 # give the container some time to start Kibana so our curl request works
-    local kibanaContainer=$(getContainerIdByName "kibana")
 
-    # @todo kbn-version header is required and must match the Kibana version
-    docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern -H 'kbn-version: 7.7.1' -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' --user "elastic:$1"
+    echo -n "setting kibana index pattern..."
+    while [ "success" != $(initKibana $elasticPW) ]; do
+        sleep 10
+        echo -n "."
+    done
+    echo ""
 }
