@@ -446,7 +446,7 @@ setupSwarmAssistant() {
 setElasticPassword() {
     local elasticContainer=$(getContainerIdByName "es-logging")
     docker exec -t $elasticContainer curl -XPOST -H "Content-Type: application/json" \
-        http://localhost:9200/_security/user/$u/_password \
+        http://localhost:9200/_security/user/$1/_password \
         -d "{ \"password\": \"$2\" }" --user "elastic:$3" --fail \
         >/dev/null && echo "success" || echo "error"
 }
@@ -483,21 +483,21 @@ initLoggingContainers() {
     waitForContainer "es-logging"
 
     echo -n "setting kibana user pw..."
-    while [ "success" != $(setElasticPassword kibana $kibanaPW $1) ]; do
+    while [ "success" != "$(setElasticPassword kibana $kibanaPW $1)" ]; do
         sleep 10
         echo -n "."
     done
     echo ""
 
     echo -n "setting logstash user pw..."
-    while [ "success" != $(setElasticPassword logstash_system $logstashPW $1) ]; do
+    while [ "success" != "$(setElasticPassword logstash_system $logstashPW $1)" ]; do
         sleep 10
         echo -n "."
     done
     echo ""
 
     echo -n "setting elastic user pw..."
-    while [ "success" != $(setElasticPassword elastic $elasticPW $1) ]; do
+    while [ "success" != "$(setElasticPassword elastic $elasticPW $1)" ]; do
         sleep 10
         echo -n "."
     done
@@ -508,12 +508,12 @@ initLoggingContainers() {
     # remove the PW files, the PWs are still readable in the config files
     # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
     # it was only used for bootstrapping
-    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
+#    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 
     waitForContainer "kibana"
 
     echo -n "setting kibana index pattern..."
-    while [ "success" != $(initKibana $elasticPW) ]; do
+    while [ "success" != "$(initKibana $elasticPW)" ]; do
         sleep 10
         echo -n "."
     done
