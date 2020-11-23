@@ -458,8 +458,8 @@ initKibana() {
     local kibanaContainer=$(getContainerIdByName "kibana")
 
     # @todo kbn-version header is required and must match the Kibana version
-    docker exec -t $kibanaContainer curl -XPOST -H "Content-Type: application/json" \ 
-        http://localhost:5601/api/saved_objects/index-pattern \
+    # @todo error "http://... No such file or directory" - why cant the URL go on a new line, it works in the function above?
+    docker exec -t $kibanaContainer curl -XPOST -H "Content-Type: application/json" http://localhost:5601/api/saved_objects/index-pattern \
         -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' \
         -H 'kbn-version: 7.7.1' --user "elastic:$1" --fail \
         >/dev/null && echo "success" || echo "error"
@@ -517,5 +517,5 @@ initLoggingContainers() {
     # remove the PW files, the PWs are still readable in the config files
     # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
     # it was only used for bootstrapping
-#    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
+    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 }
