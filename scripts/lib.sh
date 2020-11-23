@@ -457,6 +457,8 @@ setElasticPassword() {
 initKibana() {
     local kibanaContainer=$(getContainerIdByName "kibana")
 
+echo $1 > /var/log/ruo.pw
+
     # @todo kbn-version header is required and must match the Kibana version
     docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" \ 
         http://localhost:5601/api/saved_objects/index-pattern \
