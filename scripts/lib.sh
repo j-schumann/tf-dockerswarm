@@ -37,7 +37,7 @@ getContainerIdByName() {
 }
 
 waitForContainer() {
-    echo -n "waiting till container with name *$1* exists..."
+    echo -n "waiting till container with name '$1' exists..."
     while [ -z `getContainerIdByName $1` ]; do
         sleep 2
         echo -n "."
@@ -457,10 +457,8 @@ setElasticPassword() {
 initKibana() {
     local kibanaContainer=$(getContainerIdByName "kibana")
 
-echo $1 > /var/log/ruo.pw
-
     # @todo kbn-version header is required and must match the Kibana version
-    docker exec -t $kibanaContainer curl -XPOST -D- -H "Content-Type: application/json" \ 
+    docker exec -t $kibanaContainer curl -XPOST -H "Content-Type: application/json" \ 
         http://localhost:5601/api/saved_objects/index-pattern \
         -d '{"attributes":{"title":"logstash-*","timeFieldName":"@timestamp"}}' \
         -H 'kbn-version: 7.7.1' --user "elastic:$1" --fail \
@@ -505,13 +503,6 @@ initLoggingContainers() {
     done
     echo ""
 
-    printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | /usr/sbin/sendmail root
-
-    # remove the PW files, the PWs are still readable in the config files
-    # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
-    # it was only used for bootstrapping
-#    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
-
     waitForContainer "kibana"
 
     echo -n "setting kibana index pattern..."
@@ -520,4 +511,11 @@ initLoggingContainers() {
         echo -n "."
     done
     echo ""
+
+    printf "Subject: new ES credentials\nThe new Elasticsearch credentials on $(hostname) are: elastic // $elasticPW" | /usr/sbin/sendmail root
+
+    # remove the PW files, the PWs are still readable in the config files
+    # the ELASTIC_PASSWORD ist still in /etc/local/runonce.d/ran but outdated,
+    # it was only used for bootstrapping
+#    rm $assistantMountPoint/logging/{elastic,kibana,logstash}.pw
 }
