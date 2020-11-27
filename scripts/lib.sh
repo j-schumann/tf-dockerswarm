@@ -177,6 +177,12 @@ prepareLogging() {
         "$assistantMountPoint/logging/config/logstash.yml"
 }
 
+prepareBackup() {
+    local assistantMountPoint=$(getAssistantVolumeMount)
+
+    cp -R $SETUP_SCRIPT_PATH/templates/config/backup $assistantMountPoint/
+}
+
 ######################
 # Enables the UFW with basic rules, denies root login and prepares some config/scripts.
 ######################

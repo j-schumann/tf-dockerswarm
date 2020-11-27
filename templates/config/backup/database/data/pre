@@ -1,0 +1,28 @@
+#!/bin/bash
+# Dumps all databases and the privileges into separate sql files  for backup.
+# We don't backup the raw files/folders as there are mostly InnoDB tables in
+# the combined table space which could not be restored separately.
+
+mkdir -p $BACKUP_SOURCE
+
+# dump the privileges
+mysql -h$DB_HOST -uroot -p$DB_ROOT_PASSWORD --skip-column-names -A -e"SELECT CONCAT('SHOW GRANTS FOR ''',user,'''@''',host,''';') FROM mysql.user WHERE user<>''" \
+ | mysql -h$DB_HOST -uroot -p$DB_ROOT_PASSWORD --skip-column-names -A | sed 's/$/;/g' > $BACKUP_SOURCE/grants.sql
+
+mysql -h$DB_HOST -uroot -p$DB_ROOT_PASSWORD -e 'show databases' | while read dbname;
+ do
+   # skip default databases and entries that are no databases
+   case $dbname in
+     "Database" | "information_schema" | "mysql" | "#mysql50#.backup" | "performance_schema")
+       continue
+       ;;
+
+     *)
+       ;;
+   esac
+
+   # --hex-blob to dump binary data in hex
+   # --routines for stored procedures
+   # --lock-tables for read lock
+   mysqldump -h$DB_HOST -uroot -p$DB_ROOT_PASSWORD --complete-insert --hex-blob --routines --lock-tables "$dbname" -r "$BACKUP_SOURCE/$dbname.sql";
+ done

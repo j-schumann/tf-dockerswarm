@@ -5,6 +5,7 @@ variable "hcloud_token" {}
 # further variables that hold credentials/private data and have no defaults 
 variable "acme_mail" {}
 variable "admin_password" {}
+variable "backup_target" {}
 variable "docker_hub_user" {}
 variable "docker_hub_token" {}
 variable "elastic_password" {}

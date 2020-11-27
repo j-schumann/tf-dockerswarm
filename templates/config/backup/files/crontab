@@ -1,0 +1,3 @@
+# backup once per day, verify chains and delete old backups once per month
+30 3 1 * * /usr/bin/duply data backup_verify_purge --force 2>&1
+30 3 2-31 * * /usr/bin/duply data backup 2>&1

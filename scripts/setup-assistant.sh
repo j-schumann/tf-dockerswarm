@@ -20,6 +20,7 @@ setupAssistantVolume
 # assistant specific, he runs the replication slave and the ELK stack
 prepareDbSlaveStorage
 prepareLogging
+prepareBackup
 
 # requires all previous
 setupSwarmNode
