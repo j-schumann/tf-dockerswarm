@@ -62,7 +62,7 @@ GPG_OPTS='--pinentry-mode loopback --trust-model always'
 #     http://en.wikipedia.org/wiki/Url_encoding
 #   if you define the credentials as TARGET_USER, TARGET_PASS below duply
 #   will try to url_encode them for you if the need arises.
-TARGET='BACKUP_TARGET'
+TARGET='BACKUP_TARGET/files'
 
 # optionally the username/password can be defined as extra variables
 # setting them here _and_ in TARGET results in an error
