@@ -279,9 +279,8 @@ services:
     volumes:
       - $ASSISTANT_VOLUME/backup/database:/etc/duply
       - $ASSISTANT_VOLUME/backup/database:/gpg
-      - $ASSISTANT_VOLUME/backup/database/crontab:/var/spool/cron/crontabs/root
+      - $ASSISTANT_VOLUME/backup/database/crontab:/var/spool/cron/crontabs/root:ro
     environment:
-      - BACKUP_TARGET=$BACKUP_TARGET/db
       # additional config for the pre-script
       - DB_HOST=dbslave
       - DB_ROOT_PASSWORD=$MARIADB_ROOT_PASSWORD
@@ -298,9 +297,7 @@ services:
       - $ASSISTANT_VOLUME/backup/files:/etc/duply
       - $ASSISTANT_VOLUME/backup/files:/gpg
       - $SHARED_VOLUME/nginx:/backup:ro
-      - $ASSISTANT_VOLUME/backup/files/crontab:/var/spool/cron/crontabs/root
-    environment:
-      - BACKUP_TARGET=$BACKUP_TARGET/files
+      - $ASSISTANT_VOLUME/backup/files/crontab:/var/spool/cron/crontabs/root:ro
     networks:
       - traefik-net
 
