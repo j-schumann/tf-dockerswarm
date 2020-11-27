@@ -88,6 +88,7 @@ resource "hcloud_server" "assistant" {
   user_data   = templatefile("${path.module}/user-data/assistant.tpl", {
     assistant_volume_id   = hcloud_volume.assistant_volume.id
     assistant_volume_name = var.assistant_volume_name
+    backup_target         = var.backup_target
     cluster_name_prefix   = var.cluster_name_prefix
     elastic_password      = var.elastic_password
     ip_range              = var.ip_range

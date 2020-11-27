@@ -64,6 +64,7 @@ runcmd:
  - echo 'SHARED_VOLUME_NAME="${shared_volume_name}"' >> /etc/environment
  - for env in $( cat /etc/environment ); do export $(echo $env | sed -e 's/"//g'); done
  # set env vars we only use during first boot
+ - export BACKUP_TARGET=${backup_target}
  - export ELASTIC_PASSWORD=${elastic_password}
  - export MSMTP_HOST=${msmtp_host}
  - export MSMTP_USER=${msmtp_user}
