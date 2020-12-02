@@ -106,7 +106,7 @@ services:
       retries: 6
 
   webserver:
-    image: nginx
+    image: jschumanndd/fcp:nginx
     deploy:
       replicas: 2
       placement:
@@ -130,20 +130,51 @@ services:
     volumes:
 #      - /var/www/html/index.html:/usr/share/nginx/html/index.html
 #      - /var/www/html:/var/www/html
-      - $SHARED_VOLUME/nginx/site.conf:/etc/nginx/conf.d/site.conf
+#      - $SHARED_VOLUME/nginx/site.conf:/etc/nginx/conf.d/site.conf
     networks:
       - traefik-net
 
-  appservice:
-    image: php:7-fpm
+  php:
+    image: jschumanndd/fcp:latest
     deploy:
       replicas: 2
       placement:
         constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
-#    volumes:
-#      - /var/www/html:/var/www/html
+    environment:
+      START_CRON: false
+      START_MESSENGER: false
+      DATABASE_URL: //$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
+      MAILER_SENDER="FCP test <fcp@vrok.de>"
+    volumes:
+      - $SHARED_VOLUME/api/var:/srv/api/var
     networks:
       - traefik-net
+      
+  worker:
+    image: jschumanndd/fcp:latest
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
+    environment:
+      START_FPM: false
+      DATABASE_URL: //$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
+      MAILER_SENDER="FCP test <fcp@vrok.de>"
+    volumes:
+      - $SHARED_VOLUME/api/var:/srv/api/var
+    networks:
+      - traefik-net
+
+#  appservice:
+#    image: php:7-fpm
+#    deploy:
+#      replicas: 2
+#      placement:
+#        constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
+#    volumes:
+#      - /var/www/html:/var/www/html
+#    networks:
+#      - traefik-net
 
   adminer:
     image: adminer:4.7
