@@ -141,10 +141,10 @@ services:
       placement:
         constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
     environment:
-      START_CRON: false
-      START_MESSENGER: false
-      DATABASE_URL: //$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
-      MAILER_SENDER="FCP test <fcp@vrok.de>"
+      - START_CRON=false
+      - START_MESSENGER=false
+      - DATABASE_URL=//$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
+      - MAILER_SENDER="FCP test <fcp@vrok.de>"
     volumes:
       - $SHARED_VOLUME/api/var:/srv/api/var
     networks:
@@ -157,9 +157,9 @@ services:
       placement:
         constraints: [node.role == worker, node.hostname != $ASSISTANT_HOST]
     environment:
-      START_FPM: false
-      DATABASE_URL: //$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
-      MAILER_SENDER="FCP test <fcp@vrok.de>"
+      - START_FPM=false
+      - DATABASE_URL=//$MARIADB_USER:$MARIADB_PASSWORD@dbmaster/$MARIADB_DATABASE
+      - MAILER_SENDER="FCP test <fcp@vrok.de>"
     volumes:
       - $SHARED_VOLUME/api/var:/srv/api/var
     networks:
