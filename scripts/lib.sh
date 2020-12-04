@@ -374,7 +374,7 @@ setupSwarmMaster() {
     local assistantMountPoint=$(getAssistantVolumeMount)
 
     # default directories for the container data
-    mkdir -p $sharedMountPoint/{traefik,nginx,api/var,api/worker,api/php}
+    mkdir -p $sharedMountPoint/{traefik,nginx,api/var,api/worker/supervisor,api/php/supervisor}
     cp $SETUP_SCRIPT_PATH/templates/config/nginx/site.conf $sharedMountPoint/nginx/
 
     prepareMariadbConfig
