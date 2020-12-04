@@ -177,13 +177,16 @@ prepareLogging() {
         "$assistantMountPoint/logging/config/logstash.yml"
 }
 
+######################
+# Creates the adapted Duply config
+######################
 prepareBackup() {
     local assistantMountPoint=$(getAssistantVolumeMount)
 
     cp -R $SETUP_SCRIPT_PATH/templates/config/backup $assistantMountPoint/
     
-    // we don't want to set the BACKUP_TARGET in the env file, it would be visible to docker
-    // and the swarm master, set it here in the config before running the container
+    # we don't want to set the BACKUP_TARGET in the env file, it would be visible to docker
+    # and the swarm master, set it here in the config before running the container
     sed -i "s/BACKUP_TARGET/$BACKUP_TARGET/g" $assistantMountPoint/backup/database/data/conf
     sed -i "s/BACKUP_TARGET/$BACKUP_TARGET/g" $assistantMountPoint/backup/files/data/conf
 }
@@ -371,7 +374,7 @@ setupSwarmMaster() {
     local assistantMountPoint=$(getAssistantVolumeMount)
 
     # default directories for the container data
-    mkdir -p $sharedMountPoint/{traefik,nginx,api/var}
+    mkdir -p $sharedMountPoint/{traefik,nginx,api/var,api/worker,api/php}
     cp $SETUP_SCRIPT_PATH/templates/config/nginx/site.conf $sharedMountPoint/nginx/
 
     prepareMariadbConfig
